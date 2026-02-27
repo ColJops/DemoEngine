@@ -1,9 +1,9 @@
 package com.demo.game.dungeoncrawl.logic.actors;
 
-import com.demo.game.dungeoncrawl.logic.CellType;
-import com.demo.game.dungeoncrawl.logic.actors.Player;
-import com.demo.game.dungeoncrawl.logic.actors.Skeleton;
-import com.demo.game.dungeoncrawl.logic.GameMap;
+import com.demo.game.dungeoncrawl.model.CellType;
+import com.demo.game.dungeoncrawl.model.GameMap;
+import com.demo.game.dungeoncrawl.model.Player;
+import com.demo.game.dungeoncrawl.model.Skeleton;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

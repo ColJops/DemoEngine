@@ -1,8 +1,8 @@
 package com.demo.game.dungeoncrawl.logic.actors;
 
-import com.demo.game.dungeoncrawl.logic.Cell;
-import com.demo.game.dungeoncrawl.logic.CellType;
-import com.demo.game.dungeoncrawl.logic.GameMap;
+import com.demo.game.dungeoncrawl.model.Cell;
+import com.demo.game.dungeoncrawl.model.CellType;
+import com.demo.game.dungeoncrawl.model.GameMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,6 +1,6 @@
-package com.demo.game.dungeoncrawl.logic;
+package com.demo.game.dungeoncrawl.model;
 
-import com.demo.game.dungeoncrawl.logic.actors.Actor;
+import com.demo.game.dungeoncrawl.logic.Drawable;
 
 public class Cell implements Drawable {
     private CellType type;

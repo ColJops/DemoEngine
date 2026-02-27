@@ -1,4 +1,4 @@
-package com.demo.game.dungeoncrawl;
+package com.demo.game.dungeoncrawl.ui;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
 

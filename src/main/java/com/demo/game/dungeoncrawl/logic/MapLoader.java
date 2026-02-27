@@ -1,7 +1,10 @@
 package com.demo.game.dungeoncrawl.logic;
 
-import com.demo.game.dungeoncrawl.logic.actors.Player;
-import com.demo.game.dungeoncrawl.logic.actors.Skeleton;
+import com.demo.game.dungeoncrawl.model.Player;
+import com.demo.game.dungeoncrawl.model.Skeleton;
+import com.demo.game.dungeoncrawl.model.Cell;
+import com.demo.game.dungeoncrawl.model.CellType;
+import com.demo.game.dungeoncrawl.model.GameMap;
 
 import java.io.InputStream;
 import java.util.Scanner;
@@ -37,12 +40,15 @@ public class MapLoader {
 
                     case '@':
                         cell.setType(CellType.FLOOR);
-                        map.setPlayer(new Player(cell));
+                        Player player = new Player(cell);
+                        map.setPlayer(player);
+                        map.addActor(player);
                         break;
 
                     case 's':
                         cell.setType(CellType.FLOOR);
-                        new Skeleton(cell);
+                        Skeleton skeleton = new Skeleton(cell);
+                        map.addActor(skeleton);
                         break;
 
                     case ' ':

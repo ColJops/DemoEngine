@@ -1,6 +1,8 @@
-package com.demo.game.dungeoncrawl.logic;
+package com.demo.game.dungeoncrawl.model;
 
-public enum CellType {
+import com.demo.game.dungeoncrawl.logic.Drawable;
+
+public enum CellType  implements Drawable {
     EMPTY("empty"),
     FLOOR("floor"),
     WALL("wall");

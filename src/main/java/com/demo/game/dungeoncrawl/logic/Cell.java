@@ -15,6 +15,10 @@ public class Cell implements Drawable {
         this.type = type;
     }
 
+    public boolean isWalkable() {
+        return type == CellType.FLOOR;
+    }
+
     public CellType getType() {
         return type;
     }

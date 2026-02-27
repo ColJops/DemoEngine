@@ -3,8 +3,8 @@ package com.demo.game.dungeoncrawl.logic;
 import com.demo.game.dungeoncrawl.logic.actors.Player;
 
 public class GameMap {
-    private int width;
-    private int height;
+    private final int width;
+    private final int height;
     private Cell[][] cells;
 
     private Player player;
@@ -12,16 +12,20 @@ public class GameMap {
     public GameMap(int width, int height, CellType defaultCellType) {
         this.width = width;
         this.height = height;
-        cells = new Cell[width][height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                cells[x][y] = new Cell(this, x, y, defaultCellType);
+        cells = new Cell[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                cells[y][x] = new Cell(this, x, y, defaultCellType);
             }
         }
     }
 
-    public Cell getCell(int x, int y) {
-        return cells[x][y];
+    public boolean canMove(int x, int y) {
+        return getCell(x, y).isWalkable();
+    }
+
+    public Cell getCell(int column, int row) {
+        return cells[row][column];
     }
 
     public void setPlayer(Player player) {

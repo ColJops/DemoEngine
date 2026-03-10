@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class Skeleton extends Actor implements Drawable {
     public Skeleton(Cell cell) {
-        super(cell);
+        super(cell, 10, 4, 1);
     }
 
     @Override

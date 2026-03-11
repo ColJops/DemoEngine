@@ -4,6 +4,7 @@ import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.Cell;
 import com.demo.game.dungeoncrawl.model.GameMap;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -48,6 +49,16 @@ public class Main extends Application {
 
         stage.setScene(scene);
         stage.show();
+
+        AnimationTimer timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                engine.update(now);
+                refresh();
+            }
+        };
+
+        timer.start();
     }
 
     private Parent createContent() {

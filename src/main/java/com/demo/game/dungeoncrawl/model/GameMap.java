@@ -49,7 +49,12 @@ public class GameMap {
     public void addActor(Actor actor) {
         actors.add(actor);
     }
+
     public List<Actor> getActors() {
         return actors;
+    }
+
+    public void removeActor(Actor actor) {
+        actors.remove(actor);
     }
 }

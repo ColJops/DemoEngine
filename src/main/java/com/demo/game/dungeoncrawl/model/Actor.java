@@ -40,6 +40,13 @@ public abstract class Actor {
         return hp > 0;
     }
 
+    public void attack(Actor target) {
+        int damage = Math.max(1, attack - target.getDefense());
+        target.takeDamage(damage);
+        System.out.println(this.getClass().getSimpleName() + " attacks " + target.getClass().getSimpleName() + " for " + damage + " damage.");
+        //System.out.println(this + " attacks " + target + " for " + damage);
+    }
+
     public void move(int dx, int dy) {
         Cell nextCell = cell.getNeighbor(dx, dy);
 

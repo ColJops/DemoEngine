@@ -2,11 +2,14 @@ package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
 
-import java.util.Random;
+import java.util.*;
+
 
 public class Skeleton extends Actor implements Drawable {
 
     private long lastMove = 0;
+    private long lastAttack = 0;
+    private static final long ATTACK_COOLDOWN = 1_000_000_000; // 1 sekunda
 
     public Skeleton(Cell cell) {
         super(cell, 10, 4, 1);
@@ -46,44 +49,69 @@ public class Skeleton extends Actor implements Drawable {
     public void update(long now, GameMap map) {
 
         if (now - lastMove < 500_000_000) return;
+        lastMove = now;
 
         Player player = map.getPlayer();
 
-        int bestDx = 0;
-        int bestDy = 0;
-        int bestDistance = Integer.MAX_VALUE;
+        Cell start = getCell();
+        Cell goal = player.getCell();
 
-        int[][] dirs = {
-                {0, -1},
-                {0, 1},
-                {-1, 0},
-                {1, 0}
+        int[][] directions = {
+                {0,-1},{0,1},{-1,0},{1,0}
         };
 
-        for (int[] dir : dirs) {
+        Map<Cell, Cell> cameFrom = new HashMap<>();
+        Queue<Cell> queue = new LinkedList<>();
 
-            int nx = cell.getX() + dir[0];
-            int ny = cell.getY() + dir[1];
+        queue.add(start);
+        cameFrom.put(start, null);
 
-            Cell next = map.getCell(nx, ny);
+        while(!queue.isEmpty()) {
 
-            if (next == null) continue;
-            if (!next.isWalkable()) continue;
-            //Blokada większej ilości atakujących
-            if (!next.isWalkable() || next.getActor() != null) continue;
+            Cell current = queue.poll();
 
-            int distance = Math.abs(player.getCell().getX() - nx)
-                    + Math.abs(player.getCell().getY() - ny);
+            if(current == goal) break;
 
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                bestDx = dir[0];
-                bestDy = dir[1];
+            for(int[] d : directions) {
+
+                Cell next = current.getNeighbor(d[0], d[1]);
+
+                if(next == null) continue;
+                if(!next.isWalkable()) continue;
+
+                if(next.getActor() != null && !(next.getActor() instanceof Player))
+                    continue;
+
+                if(cameFrom.containsKey(next)) continue;
+
+                queue.add(next);
+                cameFrom.put(next, current);
             }
         }
 
-        move(bestDx, bestDy);
+        if(!cameFrom.containsKey(goal)) return;
 
-        lastMove = now;
+        Cell step = goal;
+
+        while(cameFrom.get(step) != start) {
+            step = cameFrom.get(step);
+        }
+
+        int dx = step.getX() - start.getX();
+        int dy = step.getY() - start.getY();
+
+        move(dx, dy);
     }
+
+
+
+    private void tryMove(int dx, int dy) {
+
+        Cell nextCell = getCell().getNeighbor(dx, dy);
+
+        if (nextCell != null && nextCell.isWalkable()) {
+            move(dx, dy);
+        }
+    }
+
 }

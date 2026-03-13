@@ -11,4 +11,14 @@ public class Player extends Actor implements Drawable {
     public String getTileName() {
         return "player";
     }
+
+    public void damage(int amount) {
+
+        health -= amount;
+
+        if (health <= 0) {
+            System.out.println("Player died");
+        }
+    }
+
 }

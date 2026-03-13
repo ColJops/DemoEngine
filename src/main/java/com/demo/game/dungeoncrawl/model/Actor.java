@@ -6,6 +6,7 @@ public abstract class Actor {
     protected int hp;
     protected int attack;
     protected int defense;
+    protected int health;
 
     public Actor(Cell cell, int hp, int attack, int defense) {
         this.cell = cell;
@@ -39,6 +40,15 @@ public abstract class Actor {
     public boolean isAlive() {
         return hp > 0;
     }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void setHealth(int health) {
+        this.health = health;
+    }
+
 
     public void attack(Actor target) {
         int damage = Math.max(1, attack - target.getDefense());

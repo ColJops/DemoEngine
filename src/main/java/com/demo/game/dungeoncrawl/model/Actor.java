@@ -1,5 +1,7 @@
 package com.demo.game.dungeoncrawl.model;
 
+import com.demo.game.dungeoncrawl.ui.Main;
+
 public abstract class Actor {
 
     protected Cell cell;
@@ -53,7 +55,7 @@ public abstract class Actor {
     public void attack(Actor target) {
         int damage = Math.max(1, attack - target.getDefense());
         target.takeDamage(damage);
-        System.out.println(this.getClass().getSimpleName() + " attacks " + target.getClass().getSimpleName() + " for " + damage + " damage.");
+        Main.GameLog.add(this.getClass().getSimpleName() + " attacks " + target.getClass().getSimpleName() + " for " + damage + " damage.");
         //System.out.println(this + " attacks " + target + " for " + damage);
     }
 

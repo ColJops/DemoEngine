@@ -1,6 +1,7 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
+import com.demo.game.dungeoncrawl.ui.Main;
 
 public class Player extends Actor implements Drawable {
     public Player(Cell cell) {
@@ -17,7 +18,8 @@ public class Player extends Actor implements Drawable {
         health -= amount;
 
         if (health <= 0) {
-            System.out.println("Player died");
+            Main.GameLog.add("Skeleton attacks!");
+
         }
     }
 

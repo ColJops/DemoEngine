@@ -1,6 +1,7 @@
 package com.demo.game.dungeoncrawl.engine;
 
 import com.demo.game.dungeoncrawl.model.*;
+import com.demo.game.dungeoncrawl.ui.Main;
 
 import java.util.ArrayList;
 
@@ -27,8 +28,14 @@ public class GameEngine {
             player.attack(enemy);
 
             if (!enemy.isAlive()) {
+
                 enemy.getCell().setActor(null);
                 map.removeActor(enemy);
+                Main.log("You killed a Skeleton!");
+
+                if (enemy instanceof Skeleton) {
+                    player.addKill();
+                }
             }
 
         } else {

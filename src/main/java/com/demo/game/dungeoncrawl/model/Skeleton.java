@@ -100,7 +100,18 @@ public class Skeleton extends Actor implements Drawable {
         int dx = step.getX() - start.getX();
         int dy = step.getY() - start.getY();
 
-        move(dx, dy);
+        Actor target = step.getActor();
+
+        if (target instanceof Player) {
+
+            if (now - lastAttack >= ATTACK_COOLDOWN) {
+                attack(target);
+                lastAttack = now;
+            }
+
+        } else {
+            move(dx, dy);
+        }
     }
 
 

@@ -8,7 +8,6 @@ public abstract class Actor {
     protected int hp;
     protected int attack;
     protected int defense;
-    protected int health;
 
     public Actor(Cell cell, int hp, int attack, int defense) {
         this.cell = cell;
@@ -35,28 +34,26 @@ public abstract class Actor {
         return defense;
     }
 
+    public void setDefense(int defense) {
+        this.defense = defense;
+    }
+
     public void takeDamage(int damage) {
-        hp -= damage;
+        hp = Math.max(0, hp - damage);
     }
 
     public boolean isAlive() {
         return hp > 0;
     }
 
-    public int getHealth() {
-        return health;
-    }
-
-    public void setHealth(int health) {
-        this.health = health;
-    }
-
 
     public void attack(Actor target) {
         int damage = Math.max(1, attack - target.getDefense());
         target.takeDamage(damage);
-        Main.GameLog.add(this.getClass().getSimpleName() + " attacks " + target.getClass().getSimpleName() + " for " + damage + " damage.");
-        //System.out.println(this + " attacks " + target + " for " + damage);
+        if (Main.instance != null) {
+            Main.log(this.getClass().getSimpleName() + " attacks " +
+                    target.getClass().getSimpleName() + " for " + damage + " damage.");
+        }
     }
 
     public void move(int dx, int dy) {

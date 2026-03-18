@@ -4,6 +4,9 @@ import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.ui.Main;
 
 public class Player extends Actor implements Drawable {
+
+    private int kills = 0;
+
     public Player(Cell cell) {
         super(cell, 20, 6, 2);
     }
@@ -13,14 +16,12 @@ public class Player extends Actor implements Drawable {
         return "player";
     }
 
-    public void damage(int amount) {
+    public void addKill() {
+        kills++;
+    }
 
-        health -= amount;
-
-        if (health <= 0) {
-            Main.GameLog.add("Skeleton attacks!");
-
-        }
+    public int getKills() {
+        return kills;
     }
 
 }

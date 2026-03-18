@@ -20,9 +20,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Main extends Application {
 
     private GameMap map;
@@ -34,6 +31,8 @@ public class Main extends Application {
     private Label defenseLabel;
     private Label killLabel;
 
+    public static Main instance;
+
     private ProgressBar hpBar;
 
     private VBox inventoryBox;
@@ -41,6 +40,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
+
+        instance = this;
         map = MapLoader.loadMap();
         engine = new GameEngine(map);
 
@@ -185,21 +186,15 @@ public class Main extends Application {
         updateHUD();
     }
 
-    public class GameLog {
-
-        private static List<String> messages = new ArrayList<>();
-
-        public static void add(String msg) {
-            messages.add(msg);
-        }
-
-        public static List<String> getMessages() {
-            return messages;
-        }
-    }
-
     public void addLog(String text) {
         logArea.appendText(text + "\n");
+        logArea.setScrollTop(Double.MAX_VALUE);
+    }
+
+    public static void log(String text) {
+        if (instance != null) {
+            instance.addLog(text);
+        }
     }
 
     private void updateHUD() {
@@ -214,8 +209,7 @@ public class Main extends Application {
         hpLabel.setText("HP: " + hp);
         attackLabel.setText("ATK: " + player.getAttack());
         defenseLabel.setText("DEF: " + player.getDefense());
-
-        killLabel.setText("KILLS: ");
+        killLabel.setText("KILLS: " + player.getKills());
     }
 
 

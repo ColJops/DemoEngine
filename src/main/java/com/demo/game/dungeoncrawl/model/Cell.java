@@ -36,7 +36,17 @@ public class Cell implements Drawable {
     }
 
     public Cell getNeighbor(int dx, int dy) {
-        return gameMap.getCell(x + dx, y + dy);
+
+        int newX = x + dx;
+        int newY = y + dy;
+
+        if (newX < 0 || newY < 0 ||
+                newX >= gameMap.getWidth() ||
+                newY >= gameMap.getHeight()) {
+            return null;
+        }
+
+        return gameMap.getCell(newX, newY);
     }
 
     @Override

@@ -1,11 +1,8 @@
 package com.demo.game.dungeoncrawl.ui;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
-import com.demo.game.dungeoncrawl.model.Cell;
-import com.demo.game.dungeoncrawl.model.GameMap;
+import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
-import com.demo.game.dungeoncrawl.model.Item;
-import com.demo.game.dungeoncrawl.model.Player;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -62,9 +59,12 @@ public class Main extends Application {
                 case RIGHT:
                     engine.handlePlayerMove(1, 0);
                     break;
-                case DIGIT1:
-                    useItem(0);
-                    break;
+                //Używanie przedmiotów w inventory
+                case DIGIT1: useItem(0); break;
+                case DIGIT2: useItem(1); break;
+                case DIGIT3: useItem(2); break;
+                case DIGIT4: useItem(3); break;
+                case DIGIT5: useItem(4); break;
             }
             refresh();
         });
@@ -218,9 +218,23 @@ public class Main extends Application {
         hpBar.setProgress((double) hp / maxHp);
 
         hpLabel.setText("HP: " + hp);
+        //hpLabel.setStyle("-fx-text-fill: #ff4d4d;");
+        if (hp > 10) {
+            hpLabel.setStyle("-fx-text-fill: #66ff66;");
+        } else if (hp > 5) {
+            hpLabel.setStyle("-fx-text-fill: #ffcc00;");
+        } else {
+            hpLabel.setStyle("-fx-text-fill: #ff4d4d;");
+        }
+
         attackLabel.setText("ATK: " + player.getAttack());
+        attackLabel.setStyle("-fx-text-fill: #ff9933;");
+
         defenseLabel.setText("DEF: " + player.getDefense());
+        defenseLabel.setStyle("-fx-text-fill: #66ccff;");
+
         killLabel.setText("KILLS: " + player.getKills());
+        killLabel.setStyle("-fx-text-fill: #cc99ff;");
 
         inventoryBox.getChildren().clear();
 
@@ -235,11 +249,16 @@ public class Main extends Application {
 
         Player player = map.getPlayer();
 
-        if (player.getInventory().size() > index) {
+        if (player.getInventory().size() <= index) {
+            Main.log("Empty slot.");
+            return; // pusty slot → nic się nie dzieje
+        }
 
-            Item item = player.getInventory().get(index);
+        Item item = player.getInventory().get(index);
 
-            item.use(player);
+        item.use(player);
+
+        if (item instanceof HealthPotion) {
             player.getInventory().remove(index);
         }
     }

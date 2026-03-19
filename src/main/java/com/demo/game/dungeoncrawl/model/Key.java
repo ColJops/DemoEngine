@@ -22,6 +22,8 @@ public class Key extends Item {
 
     @Override
     public void use(Player player) {
-        // klucz nie jest używany ręcznie
+        if (Main.instance != null) {
+            Main.log("You can't use a key like that.");
+        }
     }
 }

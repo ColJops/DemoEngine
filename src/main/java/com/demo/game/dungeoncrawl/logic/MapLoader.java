@@ -1,10 +1,6 @@
 package com.demo.game.dungeoncrawl.logic;
 
-import com.demo.game.dungeoncrawl.model.Player;
-import com.demo.game.dungeoncrawl.model.Skeleton;
-import com.demo.game.dungeoncrawl.model.Cell;
-import com.demo.game.dungeoncrawl.model.CellType;
-import com.demo.game.dungeoncrawl.model.GameMap;
+import com.demo.game.dungeoncrawl.model.*;
 
 import java.io.InputStream;
 import java.util.Scanner;
@@ -53,6 +49,11 @@ public class MapLoader {
 
                     case ' ':
                         cell.setType(CellType.WALL);
+                        break;
+
+                    case 'p':
+                        cell.setType(CellType.FLOOR);
+                        new HealthPotion(cell);
                         break;
 
                     default:

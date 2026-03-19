@@ -66,6 +66,14 @@ public abstract class Actor {
             cell.setActor(null);
             nextCell.setActor(this);
             cell = nextCell;
+
+            // pickup item
+            if (this instanceof Player && nextCell.getItem() != null) {
+                Item item = nextCell.getItem();
+                ((Player) this).addItem(item);
+                item.onPickup((Player) this);
+                nextCell.setItem(null);
+            }
         }
     }
 }

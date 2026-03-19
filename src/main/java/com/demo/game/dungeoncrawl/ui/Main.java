@@ -4,6 +4,7 @@ import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.Cell;
 import com.demo.game.dungeoncrawl.model.GameMap;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
+import com.demo.game.dungeoncrawl.model.Item;
 import com.demo.game.dungeoncrawl.model.Player;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -174,7 +175,14 @@ public class Main extends Application {
                 // najpierw tło (floor / wall)
                 Tiles.drawTile(context, cell.getType(), x, y);
 
-                // potem aktor jeśli jest
+                // item
+                if (cell.getItem() instanceof Drawable) {
+                    Tiles.drawTile(context,
+                            (Drawable) cell.getItem(),
+                            x, y);
+                }
+
+                // actor
                 if (cell.getActor() instanceof Drawable) {
                     Tiles.drawTile(context,
                             (Drawable) cell.getActor(),
@@ -210,6 +218,14 @@ public class Main extends Application {
         attackLabel.setText("ATK: " + player.getAttack());
         defenseLabel.setText("DEF: " + player.getDefense());
         killLabel.setText("KILLS: " + player.getKills());
+
+        inventoryBox.getChildren().clear();
+
+        for (Item item : player.getInventory()) {
+            Label itemLabel = new Label(item.getName());
+            itemLabel.setStyle("-fx-text-fill: gold;");
+            inventoryBox.getChildren().add(itemLabel);
+        }
     }
 
 

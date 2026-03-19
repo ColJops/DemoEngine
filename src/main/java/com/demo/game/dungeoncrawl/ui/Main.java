@@ -62,6 +62,9 @@ public class Main extends Application {
                 case RIGHT:
                     engine.handlePlayerMove(1, 0);
                     break;
+                case DIGIT1:
+                    useItem(0);
+                    break;
             }
             refresh();
         });
@@ -225,6 +228,19 @@ public class Main extends Application {
             Label itemLabel = new Label(item.getName());
             itemLabel.setStyle("-fx-text-fill: gold;");
             inventoryBox.getChildren().add(itemLabel);
+        }
+    }
+
+    private void useItem(int index) {
+
+        Player player = map.getPlayer();
+
+        if (player.getInventory().size() > index) {
+
+            Item item = player.getInventory().get(index);
+
+            item.use(player);
+            player.getInventory().remove(index);
         }
     }
 

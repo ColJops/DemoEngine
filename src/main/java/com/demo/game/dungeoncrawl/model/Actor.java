@@ -58,6 +58,22 @@ public abstract class Actor {
 
     public void move(int dx, int dy) {
         Cell nextCell = cell.getNeighbor(dx, dy);
+        // obsługa drzwi
+        if (nextCell != null && nextCell.getType() == CellType.DOOR) {
+
+            if (this instanceof Player player && player.hasKey()) {
+
+                player.useKey();
+                nextCell.setType(CellType.FLOOR);
+
+                if (Main.instance != null) {
+                    Main.log("You opened the door!");
+                }
+
+            } else {
+                return; // brak klucza → nie przechodzisz
+            }
+        }
 
         if (nextCell != null
                 && nextCell.isWalkable()

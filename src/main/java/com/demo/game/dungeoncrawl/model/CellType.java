@@ -5,7 +5,8 @@ import com.demo.game.dungeoncrawl.logic.Drawable;
 public enum CellType  implements Drawable {
     EMPTY("empty"),
     FLOOR("floor"),
-    WALL("wall");
+    WALL("wall"),
+    DOOR("door");
 
     private final String tileName;
 

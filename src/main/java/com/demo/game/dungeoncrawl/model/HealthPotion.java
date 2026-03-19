@@ -10,15 +10,22 @@ public class HealthPotion extends Item {
 
     @Override
     public String getTileName() {
-        return "potion";
+        return "potion_health";
     }
 
     @Override
     public void onPickup(Player player) {
-        player.takeDamage(-5); // heal
+        if (Main.instance != null) {
+            Main.log("Picked up Health Potion");
+        }
+    }
+
+    @Override
+    public void use(Player player) {
+        player.takeDamage(-5);
 
         if (Main.instance != null) {
-            Main.log("Picked up Health Potion (+5 HP)");
+            Main.log("Used Health Potion (+5 HP)");
         }
     }
 }

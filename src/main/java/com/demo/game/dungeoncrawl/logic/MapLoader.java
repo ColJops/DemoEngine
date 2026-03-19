@@ -56,6 +56,15 @@ public class MapLoader {
                         new HealthPotion(cell);
                         break;
 
+                    case 'D':
+                        cell.setType(CellType.DOOR);
+                        break;
+
+                    case 'k':
+                        cell.setType(CellType.FLOOR);
+                        new Key(cell);
+                        break;
+
                     default:
                         throw new RuntimeException("Unrecognized character: '" + c + "'");
                 }

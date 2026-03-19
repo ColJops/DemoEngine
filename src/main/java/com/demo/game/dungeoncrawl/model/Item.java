@@ -22,4 +22,5 @@ public abstract class Item implements Drawable {
     }
 
     public abstract void onPickup(Player player);
+    public abstract void use(Player player);
 }

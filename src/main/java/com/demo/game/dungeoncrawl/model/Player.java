@@ -36,4 +36,12 @@ public class Player extends Actor implements Drawable {
         return inventory;
     }
 
+    public boolean hasKey() {
+        return inventory.stream().anyMatch(i -> i instanceof Key);
+    }
+
+    public void useKey() {
+        inventory.removeIf(i -> i instanceof Key);
+    }
+
 }

@@ -57,23 +57,8 @@ public abstract class Actor {
     }
 
     public void move(int dx, int dy) {
+
         Cell nextCell = cell.getNeighbor(dx, dy);
-        // obsługa drzwi
-        if (nextCell != null && nextCell.getType() == CellType.DOOR) {
-
-            if (this instanceof Player player && player.hasKey()) {
-
-                player.useKey();
-                nextCell.setType(CellType.FLOOR);
-
-                if (Main.instance != null) {
-                    Main.log("You opened the door!");
-                }
-
-            } else {
-                return; // brak klucza → nie przechodzisz
-            }
-        }
 
         if (nextCell != null
                 && nextCell.isWalkable()
@@ -84,10 +69,10 @@ public abstract class Actor {
             cell = nextCell;
 
             // pickup item
-            if (this instanceof Player && nextCell.getItem() != null) {
+            if (this instanceof Player player && nextCell.getItem() != null) {
                 Item item = nextCell.getItem();
-                ((Player) this).addItem(item);
-                item.onPickup((Player) this);
+                player.addItem(item);
+                item.onPickup(player);
                 nextCell.setItem(null);
             }
         }

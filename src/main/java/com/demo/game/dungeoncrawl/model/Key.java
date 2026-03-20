@@ -4,19 +4,30 @@ import com.demo.game.dungeoncrawl.ui.Main;
 
 public class Key extends Item {
 
-    public Key(Cell cell) {
-        super(cell, "Key");
+    private KeyType type;
+
+    public Key(Cell cell, KeyType type) {
+        super(cell, type.name() + " Key");
+        this.type = type;
+    }
+
+    public KeyType getType() {
+        return type;
     }
 
     @Override
     public String getTileName() {
-        return "key";
+        return switch (type) {
+            case BLUE -> "key_blue";
+            case RED -> "key_red";
+            case GOLD -> "key_gold";
+        };
     }
 
     @Override
     public void onPickup(Player player) {
         if (Main.instance != null) {
-            Main.log("Picked up a key");
+            Main.log("Picked up a " + type + " key");
         }
     }
 

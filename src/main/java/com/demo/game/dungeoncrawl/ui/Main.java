@@ -28,6 +28,7 @@ public class Main extends Application {
     private Label attackLabel;
     private Label defenseLabel;
     private Label killLabel;
+    private int currentLevel = 1;
 
     public static Main instance;
 
@@ -40,7 +41,7 @@ public class Main extends Application {
     public void start(Stage stage) {
 
         instance = this;
-        map = MapLoader.loadMap();
+        map = MapLoader.loadMap("map1.txt");
         engine = new GameEngine(map);
 
         Scene scene = new Scene(createContent());
@@ -263,6 +264,30 @@ public class Main extends Application {
         }
     }
 
+    public void nextLevel() {
+
+        currentLevel++;
+
+        String nextMap = "map" + currentLevel + ".txt";
+
+        GameMap newMap = MapLoader.loadMap(nextMap);
+
+        // przenosimy gracza
+        Player oldPlayer = map.getPlayer();
+        Player newPlayer = newMap.getPlayer();
+
+        newPlayer.getInventory().addAll(oldPlayer.getInventory());
+
+        // zachowujemy staty
+        newPlayer.takeDamage(-(oldPlayer.getHp() - newPlayer.getHp()));
+
+        this.map = newMap;
+        this.engine = new GameEngine(map);
+
+        if (instance != null) {
+            log("Entered level " + currentLevel);
+        }
+    }
 
     public static void main(String[] args) {
         launch(args);

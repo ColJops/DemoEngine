@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.util.Scanner;
 
 public class MapLoader {
-    public static GameMap loadMap() {
-        InputStream is = MapLoader.class.getResourceAsStream("/map.txt");
+    public static GameMap loadMap(String mapName) {
+        InputStream is = MapLoader.class.getResourceAsStream("/" + mapName);
         Scanner scanner = new Scanner(is);
 
         int width = scanner.nextInt();
@@ -48,7 +48,7 @@ public class MapLoader {
                         break;
 
                     case ' ':
-                        cell.setType(CellType.WALL);
+                        //cell.setType(CellType.WALL);
                         break;
 
                     case 'p':
@@ -56,13 +56,34 @@ public class MapLoader {
                         new HealthPotion(cell);
                         break;
 
-                    case 'D':
-                        cell.setType(CellType.DOOR);
-                        break;
-
                     case 'k':
                         cell.setType(CellType.FLOOR);
-                        new Key(cell);
+                        new Key(cell, KeyType.BLUE);
+                        break;
+
+                    case 'r':
+                        cell.setType(CellType.FLOOR);
+                        new Key(cell, KeyType.RED);
+                        break;
+
+                    case 'g':
+                        cell.setType(CellType.FLOOR);
+                        new Key(cell, KeyType.GOLD);
+                        break;
+
+                    case 'D':
+                        cell.setType(CellType.DOOR);
+                        cell.setRequiredKey(KeyType.BLUE);
+                        break;
+
+                    case 'R':
+                        cell.setType(CellType.DOOR);
+                        cell.setRequiredKey(KeyType.RED);
+                        break;
+
+                    case 'G':
+                        cell.setType(CellType.DOOR);
+                        cell.setRequiredKey(KeyType.GOLD);
                         break;
 
                     default:

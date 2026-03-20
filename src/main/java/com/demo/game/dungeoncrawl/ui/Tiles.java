@@ -31,7 +31,9 @@ public class Tiles {
         tileMap.put("skeleton", new Tile(29, 6));
         tileMap.put("potion_health", new Tile(17, 25));     // Mikstura Uzdrowienia
         tileMap.put("door", new Tile(3, 3));                // Drzwi
-        tileMap.put("key", new Tile(17, 23));               // Klucz
+        tileMap.put("key_blue", new Tile(17, 23));
+        tileMap.put("key_red", new Tile(18, 23));
+        tileMap.put("key_gold", new Tile(16, 23));               // Klucz
     }
 
     public static void drawTile(GraphicsContext context, Drawable d, int x, int y) {

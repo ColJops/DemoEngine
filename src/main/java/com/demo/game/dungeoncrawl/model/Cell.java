@@ -9,6 +9,7 @@ public class Cell implements Drawable {
     private int x, y;
     private Item item;
     private KeyType requiredKey;
+    private boolean isExit;
 
     Cell(GameMap gameMap, int x, int y, CellType type) {
         this.gameMap = gameMap;
@@ -53,6 +54,21 @@ public class Cell implements Drawable {
 
     @Override
     public String getTileName() {
+
+        if (type == CellType.DOOR) {
+
+            // 🔥 brak klucza = fallback (debug)
+            if (requiredKey == null) {
+                return "door";
+            }
+
+            return switch (requiredKey) {
+                case BLUE -> "door_blue";
+                case RED -> "door_red";
+                case GOLD -> "door_gold";
+            };
+        }
+
         return type.getTileName();
     }
 
@@ -78,5 +94,13 @@ public class Cell implements Drawable {
 
     public void setRequiredKey(KeyType key) {
         this.requiredKey = key;
+    }
+
+    public boolean isExit() {
+        return isExit;
+    }
+
+    public void setExit(boolean exit) {
+        isExit = exit;
     }
 }

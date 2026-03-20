@@ -74,11 +74,13 @@ public class MapLoader {
                     case 'D':
                         cell.setType(CellType.DOOR);
                         cell.setRequiredKey(KeyType.BLUE);
+                        cell.setExit(true);
                         break;
 
                     case 'R':
                         cell.setType(CellType.DOOR);
                         cell.setRequiredKey(KeyType.RED);
+                        cell.setExit(false);
                         break;
 
                     case 'G':

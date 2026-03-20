@@ -30,7 +30,10 @@ public class Tiles {
         tileMap.put("player", new Tile(27, 0));
         tileMap.put("skeleton", new Tile(29, 6));
         tileMap.put("potion_health", new Tile(17, 25));     // Mikstura Uzdrowienia
-        tileMap.put("door", new Tile(3, 3));                // Drzwi
+        tileMap.put("door", new Tile(1, 9));                // Drzwi
+        tileMap.put("door_blue", new Tile(3, 3));
+        tileMap.put("door_red", new Tile(0, 9));
+        tileMap.put("door_gold", new Tile(23,11));
         tileMap.put("key_blue", new Tile(17, 23));
         tileMap.put("key_red", new Tile(18, 23));
         tileMap.put("key_gold", new Tile(16, 23));               // Klucz

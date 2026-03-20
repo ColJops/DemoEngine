@@ -40,7 +40,7 @@ public class GameEngine {
         }
 
         // 2. DRZWI
-        // 2. DRZWI (tylko jeśli to drzwi!)
+
         if (nextCell.getType() == CellType.DOOR) {
 
             KeyType required = nextCell.getRequiredKey();
@@ -55,10 +55,16 @@ public class GameEngine {
                 player.useKey(required);
                 nextCell.setType(CellType.FLOOR);
 
-                Main.log("You opened the " + required + " door!");
+                if (nextCell.isExit()) {
+                    Main.log("You opened the exit!");
+                } else {
+                    Main.log("You unlocked a door.");
+                }
 
-                if (Main.instance != null) {
-                    Main.instance.nextLevel();
+                if (nextCell.isExit()) {
+                    if (Main.instance != null) {
+                        Main.instance.nextLevel();
+                    }
                 }
 
             } else {

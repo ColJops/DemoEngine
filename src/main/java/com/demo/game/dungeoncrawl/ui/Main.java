@@ -177,7 +177,7 @@ public class Main extends Application {
                 Cell cell = map.getCell(x, y);
 
                 // najpierw tło (floor / wall)
-                Tiles.drawTile(context, cell.getType(), x, y);
+                Tiles.drawTile(context, cell, x, y);
 
                 // item
                 if (cell.getItem() instanceof Drawable) {

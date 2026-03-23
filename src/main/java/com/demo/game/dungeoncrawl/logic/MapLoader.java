@@ -1,6 +1,14 @@
 package com.demo.game.dungeoncrawl.logic;
 
 import com.demo.game.dungeoncrawl.model.*;
+import com.demo.game.dungeoncrawl.model.enemy.Bat;
+import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
+import com.demo.game.dungeoncrawl.model.item.HealthPotion;
+import com.demo.game.dungeoncrawl.model.item.Key;
+import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.CellType;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 
 import java.io.InputStream;
 import java.util.Scanner;
@@ -86,6 +94,12 @@ public class MapLoader {
                     case 'G':
                         cell.setType(CellType.DOOR);
                         cell.setRequiredKey(KeyType.GOLD);
+                        break;
+
+                    case 'b':
+                        cell.setType(CellType.FLOOR);
+                        Bat bat = new Bat(cell);
+                        map.addActor(bat);
                         break;
 
                     default:

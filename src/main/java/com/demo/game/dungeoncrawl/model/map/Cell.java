@@ -1,6 +1,9 @@
-package com.demo.game.dungeoncrawl.model;
+package com.demo.game.dungeoncrawl.model.map;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
+import com.demo.game.dungeoncrawl.model.Actor;
+import com.demo.game.dungeoncrawl.model.Item;
+import com.demo.game.dungeoncrawl.model.item.KeyType;
 
 public class Cell implements Drawable {
     private CellType type;

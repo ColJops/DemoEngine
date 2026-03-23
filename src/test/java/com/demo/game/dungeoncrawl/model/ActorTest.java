@@ -1,5 +1,9 @@
 package com.demo.game.dungeoncrawl.model;
 
+import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
+import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.CellType;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

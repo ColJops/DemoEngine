@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class Tiles {
     public static int TILE_WIDTH = 32;
+    public static int TILE_HEIGHT = 32;
 
     private static Image tileset = new Image("/tiles.png", 543 * 2, 543 * 2, true, false);
     private static Map<String, Tile> tileMap = new HashMap<>();
@@ -36,7 +37,8 @@ public class Tiles {
         tileMap.put("door_gold", new Tile(23,11));
         tileMap.put("key_blue", new Tile(17, 23));
         tileMap.put("key_red", new Tile(18, 23));
-        tileMap.put("key_gold", new Tile(16, 23));               // Klucz
+        tileMap.put("key_gold", new Tile(16, 23));
+        tileMap.put("bat", new Tile(26, 8));
     }
 
     public static void drawTile(GraphicsContext context, Drawable d, int x, int y) {

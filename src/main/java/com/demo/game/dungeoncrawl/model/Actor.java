@@ -1,5 +1,6 @@
 package com.demo.game.dungeoncrawl.model;
 
+import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.ui.Main;
 
 public abstract class Actor {

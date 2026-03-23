@@ -1,4 +1,4 @@
-package com.demo.game.dungeoncrawl.model;
+package com.demo.game.dungeoncrawl.model.map;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
 

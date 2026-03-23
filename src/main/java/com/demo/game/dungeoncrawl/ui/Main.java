@@ -3,6 +3,9 @@ package com.demo.game.dungeoncrawl.ui;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
+import com.demo.game.dungeoncrawl.model.item.HealthPotion;
+import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -284,9 +287,17 @@ public class Main extends Application {
         this.map = newMap;
         this.engine = new GameEngine(map);
 
+        resizeCanvas();
+        refresh();
+
         if (instance != null) {
             log("Entered level " + currentLevel);
         }
+    }
+
+    private void resizeCanvas() {
+        canvas.setWidth(map.getWidth() * Tiles.TILE_WIDTH);
+        canvas.setHeight(map.getHeight() * Tiles.TILE_HEIGHT);
     }
 
     public static void main(String[] args) {

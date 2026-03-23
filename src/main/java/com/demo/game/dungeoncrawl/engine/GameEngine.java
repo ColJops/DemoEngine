@@ -1,9 +1,11 @@
 package com.demo.game.dungeoncrawl.engine;
 
 import com.demo.game.dungeoncrawl.model.*;
+import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.CellType;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 import com.demo.game.dungeoncrawl.ui.Main;
-
-import java.util.ArrayList;
 
 public class GameEngine {
 
@@ -29,9 +31,9 @@ public class GameEngine {
             if (!enemy.isAlive()) {
                 enemy.getCell().setActor(null);
                 map.removeActor(enemy);
-                Main.log("You killed a Skeleton!");
+                Main.log("You killed a " + enemy.getClass().getSimpleName() + "!");
 
-                if (enemy instanceof Skeleton) {
+                if (enemy instanceof Enemy) {
                     player.addKill();
                 }
             }
@@ -78,20 +80,12 @@ public class GameEngine {
         player.move(dx, dy);
     }
 
-    private void nextTurn() {
-        for (Actor actor : new ArrayList<>(map.getActors())) {
-            if (actor instanceof Skeleton && actor.isAlive()) {
-                ((Skeleton) actor).moveRandom();
-            }
-        }
-    }
-
     public void update(long now) {
 
         for (Actor actor : map.getActors()) {
 
-            if (actor instanceof Skeleton) {
-                ((Skeleton) actor).update(now, map);
+            if (actor instanceof Enemy enemy) {
+                enemy.update(now, map);
             }
 
         }

@@ -1,5 +1,8 @@
-package com.demo.game.dungeoncrawl.model;
+package com.demo.game.dungeoncrawl.model.item;
 
+import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.Item;
+import com.demo.game.dungeoncrawl.model.Player;
 import com.demo.game.dungeoncrawl.ui.Main;
 
 public class HealthPotion extends Item {

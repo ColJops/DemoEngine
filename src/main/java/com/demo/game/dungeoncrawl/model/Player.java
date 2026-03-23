@@ -1,7 +1,9 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
-import com.demo.game.dungeoncrawl.ui.Main;
+import com.demo.game.dungeoncrawl.model.item.Key;
+import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.map.Cell;
 
 import java.util.ArrayList;
 import java.util.List;

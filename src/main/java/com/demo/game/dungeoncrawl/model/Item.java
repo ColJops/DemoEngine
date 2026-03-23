@@ -1,6 +1,7 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
+import com.demo.game.dungeoncrawl.model.map.Cell;
 
 public abstract class Item implements Drawable {
 

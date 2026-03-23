@@ -1,4 +1,7 @@
-package com.demo.game.dungeoncrawl.model;
+package com.demo.game.dungeoncrawl.model.map;
+
+import com.demo.game.dungeoncrawl.model.Actor;
+import com.demo.game.dungeoncrawl.model.Player;
 
 import java.util.ArrayList;
 import java.util.List;

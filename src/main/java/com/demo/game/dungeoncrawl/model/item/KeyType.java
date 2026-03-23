@@ -1,4 +1,4 @@
-package com.demo.game.dungeoncrawl.model;
+package com.demo.game.dungeoncrawl.model.item;
 
 public enum KeyType {
     BLUE,

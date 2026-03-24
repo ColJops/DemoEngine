@@ -7,37 +7,22 @@ import com.demo.game.dungeoncrawl.ui.Main;
 
 public class Key extends Item {
 
-    private KeyType type;
+    private KeyType keyType;
 
-    public Key(Cell cell, KeyType type) {
-        super(cell, type.name() + " Key");
-        this.type = type;
+    public Key(KeyType keyType) {
+        super(keyType.name() + " Key", ItemType.KEY, getTileNameForKey(keyType));
+        this.keyType = keyType;
     }
 
-    public KeyType getType() {
-        return type;
+    public KeyType getKeyType() {
+        return keyType;
     }
 
-    @Override
-    public String getTileName() {
+    private static String getTileNameForKey(KeyType type) {
         return switch (type) {
             case BLUE -> "key_blue";
             case RED -> "key_red";
             case GOLD -> "key_gold";
         };
-    }
-
-    @Override
-    public void onPickup(Player player) {
-        if (Main.instance != null) {
-            Main.log("Picked up a " + type + " key");
-        }
-    }
-
-    @Override
-    public void use(Player player) {
-        if (Main.instance != null) {
-            Main.log("You can't use a key like that.");
-        }
     }
 }

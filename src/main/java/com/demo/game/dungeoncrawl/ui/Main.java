@@ -38,6 +38,8 @@ public class Main extends Application {
     private ProgressBar hpBar;
 
     private VBox inventoryBox;
+    private Label weaponLabel;
+    private Label shieldLabel;
     private TextArea logArea;
 
     @Override
@@ -129,7 +131,15 @@ public class Main extends Application {
         killLabel = new Label();
 
         VBox statsBox = new VBox(5, hpBar, hpLabel, attackLabel, defenseLabel, killLabel);
+        Label equipmentTitle = new Label("EQUIPMENT");
+        equipmentTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
 
+        weaponLabel = new Label();
+        shieldLabel = new Label();
+
+        VBox equipmentBox = new VBox(5, weaponLabel, shieldLabel);
+        weaponLabel.setStyle("-fx-text-fill: #ff9933;");
+        shieldLabel.setStyle("-fx-text-fill: #66ccff;");
         Label inventoryTitle = new Label("INVENTORY");
         inventoryTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
 
@@ -145,6 +155,8 @@ public class Main extends Application {
         hud.getChildren().addAll(
                 title,
                 statsBox,
+                equipmentTitle,
+                equipmentBox,
                 inventoryTitle,
                 inventoryBox,
                 logTitle,
@@ -240,12 +252,34 @@ public class Main extends Application {
         killLabel.setText("KILLS: " + player.getKills());
         killLabel.setStyle("-fx-text-fill: #cc99ff;");
 
+        // EQUIPMENT
+        if (player.getEquippedWeapon() != null) {
+            weaponLabel.setText("Weapon: " + player.getEquippedWeapon().getName());
+        } else {
+            weaponLabel.setText("Weapon: none");
+        }
+
+        if (player.getEquippedShield() != null) {
+            shieldLabel.setText("Shield: " + player.getEquippedShield().getName());
+        } else {
+            shieldLabel.setText("Shield: none");
+        }
+
         inventoryBox.getChildren().clear();
 
+        int index = 1;
         for (Item item : player.getInventory()) {
-            Label itemLabel = new Label(item.getName());
-            itemLabel.setStyle("-fx-text-fill: gold;");
+            Label itemLabel = new Label(index + ". " + item.getName());
+
+            if (player.isEquipped(item)) {
+                itemLabel.setStyle("-fx-text-fill: #66ff66; -fx-font-weight: bold;");
+                itemLabel.setText(index + ". " + item.getName() + " (E)");
+
+            } else {
+                itemLabel.setStyle("-fx-text-fill: gold;");
+            }
             inventoryBox.getChildren().add(itemLabel);
+            index++;
         }
     }
 

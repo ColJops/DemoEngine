@@ -72,8 +72,8 @@ public abstract class Actor {
             // pickup item
             if (this instanceof Player player && nextCell.getItem() != null) {
                 Item item = nextCell.getItem();
-                player.addItem(item);
-                item.onPickup(player);
+                player.pickUp(item);   // 🔥 TU JEST CAŁA LOGIKA
+               // System.out.println("Trying pickup: " + nextCell.getItem()); //Debug
                 nextCell.setItem(null);
             }
         }

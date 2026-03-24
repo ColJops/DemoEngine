@@ -3,9 +3,7 @@ package com.demo.game.dungeoncrawl.logic;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.enemy.Bat;
 import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
-import com.demo.game.dungeoncrawl.model.item.HealthPotion;
-import com.demo.game.dungeoncrawl.model.item.Key;
-import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.item.*;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -61,22 +59,22 @@ public class MapLoader {
 
                     case 'p':
                         cell.setType(CellType.FLOOR);
-                        new HealthPotion(cell);
+                        cell.setItem(new HealthPotion());
                         break;
 
                     case 'k':
                         cell.setType(CellType.FLOOR);
-                        new Key(cell, KeyType.BLUE);
+                        cell.setItem(new Key(KeyType.BLUE));
                         break;
 
                     case 'r':
                         cell.setType(CellType.FLOOR);
-                        new Key(cell, KeyType.RED);
+                        cell.setItem(new Key(KeyType.RED));
                         break;
 
                     case 'g':
                         cell.setType(CellType.FLOOR);
-                        new Key(cell, KeyType.GOLD);
+                        cell.setItem(new Key(KeyType.GOLD));
                         break;
 
                     case 'D':
@@ -100,6 +98,16 @@ public class MapLoader {
                         cell.setType(CellType.FLOOR);
                         Bat bat = new Bat(cell);
                         map.addActor(bat);
+                        break;
+
+                    case 't':
+                        cell.setType(CellType.FLOOR);
+                        cell.setItem(new Shield("Wooden Shield", 1));
+                        break;
+
+                    case 'm':
+                        cell.setType(CellType.FLOOR);
+                        cell.setItem(new Weapon("Iron Sword", 2));
                         break;
 
                     default:

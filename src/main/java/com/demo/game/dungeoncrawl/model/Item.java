@@ -1,27 +1,34 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
+import com.demo.game.dungeoncrawl.model.item.ItemType;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 
-public abstract class Item implements Drawable {
+public abstract class Item  implements Drawable{
 
-    protected Cell cell;
     protected String name;
+    protected ItemType type;
+    protected String tileName;
 
-    public Item(Cell cell, String name) {
-        this.cell = cell;
+    public Item(String name, ItemType type, String tileName) {
         this.name = name;
-        cell.setItem(this);
-    }
-
-    public Cell getCell() {
-        return cell;
+        this.type = type;
+        this.tileName = tileName;
     }
 
     public String getName() {
         return name;
     }
 
-    public abstract void onPickup(Player player);
-    public abstract void use(Player player);
+    public ItemType getType() {
+        return type;
+    }
+    @Override
+    public String getTileName() {
+        return tileName;
+    }
+
+    public void use(Player player) {
+        // default: nic nie robi
+    }
 }

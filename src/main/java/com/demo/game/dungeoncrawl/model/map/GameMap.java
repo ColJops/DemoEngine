@@ -11,6 +11,7 @@ public class GameMap {
     private final int height;
     private Cell[][] cells;
     private List<Actor> actors = new ArrayList<>(); //Przechowujemy listę aktorów
+    private BiomeType biome;
 
     private Player player;
 
@@ -59,5 +60,13 @@ public class GameMap {
 
     public void removeActor(Actor actor) {
         actors.remove(actor);
+    }
+
+    public BiomeType getBiome() {
+        return biome;
+    }
+
+    public void setBiome(BiomeType biome) {
+        this.biome = biome;
     }
 }

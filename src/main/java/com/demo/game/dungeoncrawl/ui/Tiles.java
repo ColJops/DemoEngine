@@ -2,6 +2,8 @@ package com.demo.game.dungeoncrawl.ui;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
 
+import com.demo.game.dungeoncrawl.model.map.BiomeType;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 
@@ -27,6 +29,7 @@ public class Tiles {
     static {
         tileMap.put("empty", new Tile(0, 0));
         tileMap.put("wall", new Tile(10, 17));
+        tileMap.put("forest_wall", new Tile(3, 1));
         tileMap.put("floor", new Tile(2, 0));
         tileMap.put("player", new Tile(27, 0));
         tileMap.put("skeleton", new Tile(29, 6));
@@ -43,9 +46,23 @@ public class Tiles {
         tileMap.put("shield", new Tile(5, 26));
     }
 
-    public static void drawTile(GraphicsContext context, Drawable d, int x, int y) {
-        Tile tile = tileMap.get(d.getTileName());
+    public static void drawTile(GraphicsContext context, Drawable d, int x, int y, GameMap map) {
+
+        String tileName = d.getTileName();
+
+        // BIOME override
+        if (map.getBiome() == BiomeType.FOREST) {
+            if (tileName.equals("wall")) {
+                tileName = "forest_wall";
+            }
+            if (tileName.equals("floor")) {
+                tileName = "forest_floor"; // dodamy zaraz
+            }
+        }
+
+        Tile tile = tileMap.get(tileName);
+
         context.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
-                x * TILE_WIDTH, y * TILE_WIDTH, TILE_WIDTH, TILE_WIDTH);
+                x * TILE_WIDTH, y * TILE_WIDTH, TILE_WIDTH, TILE_HEIGHT);
     }
 }

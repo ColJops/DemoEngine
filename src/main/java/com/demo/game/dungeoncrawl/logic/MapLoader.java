@@ -4,6 +4,7 @@ import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.enemy.Bat;
 import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
 import com.demo.game.dungeoncrawl.model.item.*;
+import com.demo.game.dungeoncrawl.model.map.BiomeType;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -114,6 +115,11 @@ public class MapLoader {
                         throw new RuntimeException("Unrecognized character: '" + c + "'");
                 }
             }
+        }
+        if (mapName.matches("map([1-9])\\.txt")) {
+            map.setBiome(BiomeType.DUNGEON);
+        } else {
+            map.setBiome(BiomeType.FOREST);
         }
 
         return map;

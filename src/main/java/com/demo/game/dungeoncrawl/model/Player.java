@@ -58,6 +58,14 @@ public class Player extends Actor implements Drawable {
         return equippedShield;
     }
 
+    public int getX() {
+        return cell.getX();
+    }
+
+    public int getY() {
+        return cell.getY();
+    }
+
     public boolean hasKey(KeyType type) {
         return inventory.stream()
                 .filter(item -> item instanceof Key)

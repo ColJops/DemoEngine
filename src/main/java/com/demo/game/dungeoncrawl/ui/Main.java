@@ -12,6 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
@@ -27,20 +28,25 @@ public class Main extends Application {
     private GameEngine engine;
     private GridPane gridPane;
     private Canvas canvas;
+    public static Main instance;
+
+    //HUD
     private Label hpLabel;
     private Label attackLabel;
     private Label defenseLabel;
     private Label killLabel;
     private int currentLevel = 1;
-
-    public static Main instance;
-
     private ProgressBar hpBar;
-
     private VBox inventoryBox;
     private Label weaponLabel;
     private Label shieldLabel;
     private TextArea logArea;
+
+    //Viewport
+    private final int VIEW_WIDTH = 20;
+    private final int VIEW_HEIGHT = 15;
+    private int cameraX = 0;
+    private int cameraY = 0;
 
     @Override
     public void start(Stage stage) {
@@ -49,7 +55,10 @@ public class Main extends Application {
         map = MapLoader.loadMap("map1.txt");
         engine = new GameEngine(map);
 
-        Scene scene = new Scene(createContent());
+        int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
+        int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
+
+        Scene scene = new Scene(createContent(), canvasWidth + 260, canvasHeight);
 
         scene.setOnKeyPressed(event -> {
             switch (event.getCode()) {
@@ -76,6 +85,8 @@ public class Main extends Application {
         });
 
         stage.setScene(scene);
+        stage.setResizable(false);
+        stage.sizeToScene();
         stage.show();
         scene.getRoot().requestFocus();
 
@@ -92,15 +103,18 @@ public class Main extends Application {
 
     private Parent createContent() {
 
-        canvas = new Canvas(
-                map.getWidth() * Tiles.TILE_WIDTH,
-                map.getHeight() * Tiles.TILE_WIDTH
-        );
+        int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
+        int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
+
+        canvas = new Canvas(canvasWidth, canvasHeight);
 
         BorderPane root = new BorderPane();
-
         root.setCenter(canvas);
-        root.setRight(createUI());
+
+        VBox ui = createUI();
+        ui.setPrefWidth(260);
+        root.setStyle("-fx-background-color: black;");
+        root.setRight(ui);
 
         refresh();
 
@@ -122,8 +136,12 @@ public class Main extends Application {
         title.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
 
         hpBar = new ProgressBar(1);
+        hpBar.setMinWidth(200);
+        hpBar.setMaxWidth(200);
         hpBar.setStyle("-fx-accent: red;");
         hpBar.setPrefWidth(200);
+        hud.setMinWidth(260);
+        hud.setMaxWidth(260);
 
         hpLabel = new Label();
         attackLabel = new Label();
@@ -144,6 +162,15 @@ public class Main extends Application {
         inventoryTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
 
         inventoryBox = new VBox(5);
+        ScrollPane inventoryScroll = new ScrollPane(inventoryBox);
+        inventoryScroll.setStyle("""
+              -fx-background: #1e1e1e;
+              -fx-background-color: #1e1e1e;
+                """);
+
+        inventoryBox.setStyle("-fx-background-color: #1e1e1e;");
+        inventoryScroll.setPrefHeight(150);
+        inventoryScroll.setFitToWidth(true);
 
         Label logTitle = new Label("COMBAT LOG");
         logTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
@@ -158,7 +185,7 @@ public class Main extends Application {
                 equipmentTitle,
                 equipmentBox,
                 inventoryTitle,
-                inventoryBox,
+                inventoryScroll,
                 logTitle,
                 logArea
         );
@@ -182,33 +209,43 @@ public class Main extends Application {
 
     private void refresh() {
 
+        Player player = map.getPlayer();
+
+        cameraX = player.getX() - VIEW_WIDTH / 2;
+        cameraY = player.getY() - VIEW_HEIGHT / 2;
+
+        // clamp (żeby nie wyjść poza mapę)
+        cameraX = Math.max(0, Math.min(cameraX, map.getWidth() - VIEW_WIDTH));
+        cameraY = Math.max(0, Math.min(cameraY, map.getHeight() - VIEW_HEIGHT));
+
         GraphicsContext context = canvas.getGraphicsContext2D();
 
         context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
+// 🔥 RENDER TYLKO VIEWPORTU
+        for (int y = 0; y < VIEW_HEIGHT; y++) {
+            for (int x = 0; x < VIEW_WIDTH; x++) {
 
-                Cell cell = map.getCell(x, y);
+                int mapX = x + cameraX;
+                int mapY = y + cameraY;
 
-                // najpierw tło (floor / wall)
-                Tiles.drawTile(context, cell, x, y);
+                Cell cell = map.getCell(mapX, mapY);
+
+                // tło
+                Tiles.drawTile(context, cell, x, y, map);
 
                 // item
                 if (cell.getItem() instanceof Drawable) {
-                    Tiles.drawTile(context,
-                            (Drawable) cell.getItem(),
-                            x, y);
+                    Tiles.drawTile(context, (Drawable) cell.getItem(), x, y, map);
                 }
 
                 // actor
                 if (cell.getActor() instanceof Drawable) {
-                    Tiles.drawTile(context,
-                            (Drawable) cell.getActor(),
-                            x, y);
+                    Tiles.drawTile(context, (Drawable) cell.getActor(), x, y, map);
                 }
             }
         }
+
         canvas.requestFocus();
         updateHUD();
     }
@@ -330,8 +367,8 @@ public class Main extends Application {
     }
 
     private void resizeCanvas() {
-        canvas.setWidth(map.getWidth() * Tiles.TILE_WIDTH);
-        canvas.setHeight(map.getHeight() * Tiles.TILE_HEIGHT);
+        canvas.setWidth(VIEW_WIDTH * Tiles.TILE_WIDTH);
+        canvas.setHeight(VIEW_HEIGHT * Tiles.TILE_HEIGHT);
     }
 
     public static void main(String[] args) {

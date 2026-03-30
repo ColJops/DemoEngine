@@ -31,6 +31,11 @@ public class GameMap {
     }
 
     public Cell getCell(int column, int row) {
+
+        if (column < 0 || column >= width || row < 0 || row >= height) {
+            return null;
+        }
+
         return cells[row][column];
     }
 

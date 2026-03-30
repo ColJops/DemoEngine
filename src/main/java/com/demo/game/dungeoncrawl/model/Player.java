@@ -41,6 +41,7 @@ public class Player extends Actor implements Drawable {
     public int getKills() {
         return kills;
     }
+    public int setKills(int kills) { return this.kills = kills; };
 
     public void addItem(Item item) {
         inventory.add(item);
@@ -105,26 +106,40 @@ public class Player extends Actor implements Drawable {
 
     public void pickUp(Item item) {
 
-        if (inventory.size() >= INVENTORY_SIZE) {
-            Main.log("Inventory full!");
-            return;
-        }
-
-        inventory.add(item);
-
         if (item instanceof Weapon weapon) {
-            equipWeapon(weapon);
-            Main.log("Picked up " + weapon.getName() + " (+" + weapon.getAttackBonus() + " ATK)");
+
+            if (equippedWeapon == null) {
+                equipWeapon(weapon);
+                Main.log("Equipped " + weapon.getName() + " (+" + weapon.getAttackBonus() + " ATK)");
+            } else {
+                baseAttack += weapon.getAttackBonus();
+                Main.log("Picked up " + weapon.getName() + " (+" + weapon.getAttackBonus() + " ATK stacked)");
+            }
 
         } else if (item instanceof Shield shield) {
-            equipShield(shield);
-            Main.log("Picked up " + shield.getName() + " (+" + shield.getDefenseBonus() + " DEF)");
 
-        } else if (item instanceof Key key) {
-            Main.log("Picked up " + key.getKeyType() + " key");
+            if (equippedShield == null) {
+                equipShield(shield);
+                Main.log("Equipped " + shield.getName() + " (+" + shield.getDefenseBonus() + " DEF)");
+            } else {
+                baseDefense += shield.getDefenseBonus();
+                Main.log("Picked up " + shield.getName() + " (+" + shield.getDefenseBonus() + " DEF stacked)");
+            }
 
         } else {
-            Main.log("Picked up " + item.getName());
+            // 🔥 tylko tutaj dodajemy do inventory
+            inventory.add(item);
+
+            if (inventory.size() >= INVENTORY_SIZE) {
+                Main.log("Inventory full!");
+                return;
+            }
+
+            if (item instanceof Key key) {
+                Main.log("Picked up " + key.getKeyType() + " key");
+            } else {
+                Main.log("Picked up " + item.getName());
+            }
         }
     }
 
@@ -152,4 +167,16 @@ public class Player extends Actor implements Drawable {
         return item == equippedWeapon || item == equippedShield;
     }
 
+    public void recalculateStats() {
+        attack = baseAttack;
+        defense = baseDefense;
+
+        if (equippedWeapon != null) {
+            attack += equippedWeapon.getAttackBonus();
+        }
+
+        if (equippedShield != null) {
+            defense += equippedShield.getDefenseBonus();
+        }
+    }
 }

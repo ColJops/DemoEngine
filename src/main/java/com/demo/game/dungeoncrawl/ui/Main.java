@@ -13,7 +13,6 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
 import javafx.scene.layout.BorderPane;
@@ -26,7 +25,6 @@ public class Main extends Application {
 
     private GameMap map;
     private GameEngine engine;
-    private GridPane gridPane;
     private Canvas canvas;
     public static Main instance;
 
@@ -45,8 +43,8 @@ public class Main extends Application {
     //Viewport
     private final int VIEW_WIDTH = 20;
     private final int VIEW_HEIGHT = 15;
-    private int cameraX = 0;
-    private int cameraY = 0;
+    private double cameraX = 0;
+    private double cameraY = 0;
 
     @Override
     public void start(Stage stage) {
@@ -136,10 +134,9 @@ public class Main extends Application {
         title.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
 
         hpBar = new ProgressBar(1);
-        hpBar.setMinWidth(200);
-        hpBar.setMaxWidth(200);
-        hpBar.setStyle("-fx-accent: red;");
         hpBar.setPrefWidth(200);
+        hpBar.setPrefHeight(18);
+        hpBar.setStyle("-fx-accent: red;");
         hud.setMinWidth(260);
         hud.setMaxWidth(260);
 
@@ -149,6 +146,8 @@ public class Main extends Application {
         killLabel = new Label();
 
         VBox statsBox = new VBox(5, hpBar, hpLabel, attackLabel, defenseLabel, killLabel);
+        statsBox.setFillWidth(true);
+        VBox.setVgrow(hpBar, javafx.scene.layout.Priority.NEVER);
         Label equipmentTitle = new Label("EQUIPMENT");
         equipmentTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
 
@@ -166,7 +165,7 @@ public class Main extends Application {
         inventoryScroll.setStyle("""
               -fx-background: #1e1e1e;
               -fx-background-color: #1e1e1e;
-                """);
+               \s""");
 
         inventoryBox.setStyle("-fx-background-color: #1e1e1e;");
         inventoryScroll.setPrefHeight(150);
@@ -211,12 +210,18 @@ public class Main extends Application {
 
         Player player = map.getPlayer();
 
-        cameraX = player.getX() - VIEW_WIDTH / 2;
-        cameraY = player.getY() - VIEW_HEIGHT / 2;
+        double targetX = player.getX() - VIEW_WIDTH / 2.0;
+        double targetY = player.getY() - VIEW_HEIGHT / 2.0;
+        cameraX += (targetX - cameraX) * 0.1;
+        cameraY += (targetY - cameraY) * 0.1;
+
 
         // clamp (żeby nie wyjść poza mapę)
-        cameraX = Math.max(0, Math.min(cameraX, map.getWidth() - VIEW_WIDTH));
-        cameraY = Math.max(0, Math.min(cameraY, map.getHeight() - VIEW_HEIGHT));
+        double maxX = Math.max(0, map.getWidth() - VIEW_WIDTH);
+        double maxY = Math.max(0, map.getHeight() - VIEW_HEIGHT);
+
+        cameraX = Math.max(0, Math.min(cameraX, maxX));
+        cameraY = Math.max(0, Math.min(cameraY, maxY));
 
         GraphicsContext context = canvas.getGraphicsContext2D();
 
@@ -226,16 +231,17 @@ public class Main extends Application {
         for (int y = 0; y < VIEW_HEIGHT; y++) {
             for (int x = 0; x < VIEW_WIDTH; x++) {
 
-                int mapX = x + cameraX;
-                int mapY = y + cameraY;
+                int mapX = x + (int) cameraX;
+                int mapY = y + (int) cameraY;
 
                 Cell cell = map.getCell(mapX, mapY);
+                if (cell == null) continue;
 
                 // tło
                 Tiles.drawTile(context, cell, x, y, map);
 
                 // item
-                if (cell.getItem() instanceof Drawable) {
+                if (cell.getItem() != null) {
                     Tiles.drawTile(context, (Drawable) cell.getItem(), x, y, map);
                 }
 
@@ -350,10 +356,26 @@ public class Main extends Application {
         Player oldPlayer = map.getPlayer();
         Player newPlayer = newMap.getPlayer();
 
+        // inventory
         newPlayer.getInventory().addAll(oldPlayer.getInventory());
 
-        // zachowujemy staty
+        // equipment (poprawnie!)
+        if (oldPlayer.getEquippedWeapon() != null) {
+            newPlayer.equipWeapon(oldPlayer.getEquippedWeapon());
+        }
+
+        if (oldPlayer.getEquippedShield() != null) {
+            newPlayer.equipShield(oldPlayer.getEquippedShield());
+        }
+
+        // staty
+        newPlayer.setKills(oldPlayer.getKills());
+
+        // HP
         newPlayer.takeDamage(-(oldPlayer.getHp() - newPlayer.getHp()));
+
+        // jeśli masz system statów:
+        newPlayer.recalculateStats();
 
         this.map = newMap;
         this.engine = new GameEngine(map);
@@ -370,6 +392,8 @@ public class Main extends Application {
         canvas.setWidth(VIEW_WIDTH * Tiles.TILE_WIDTH);
         canvas.setHeight(VIEW_HEIGHT * Tiles.TILE_HEIGHT);
     }
+
+
 
     public static void main(String[] args) {
         launch(args);

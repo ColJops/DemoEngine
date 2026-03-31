@@ -29,7 +29,8 @@ public class Tiles {
     static {
         tileMap.put("empty", new Tile(0, 0));
         tileMap.put("wall", new Tile(10, 17));
-        tileMap.put("forest_wall", new Tile(3, 1));
+        tileMap.put("forest_wall", new Tile(3, 1));         // Las
+        tileMap.put("forest_floor", new Tile(6, 0));        //
         tileMap.put("floor", new Tile(2, 0));
         tileMap.put("player", new Tile(27, 0));
         tileMap.put("skeleton", new Tile(29, 6));
@@ -42,7 +43,7 @@ public class Tiles {
         tileMap.put("key_red", new Tile(18, 23));
         tileMap.put("key_gold", new Tile(16, 23));
         tileMap.put("bat", new Tile(26, 8));
-        tileMap.put("sword", new Tile(0, 29));
+        tileMap.put("sword", new Tile(0, 29));              //Ekwipunek
         tileMap.put("shield", new Tile(5, 26));
     }
 
@@ -61,6 +62,11 @@ public class Tiles {
         }
 
         Tile tile = tileMap.get(tileName);
+
+        if (tile == null) {
+            System.out.println("Missing tile: " + tileName);
+            return;
+        }
 
         context.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
                 x * TILE_WIDTH, y * TILE_WIDTH, TILE_WIDTH, TILE_HEIGHT);

@@ -227,7 +227,7 @@ public class Main extends Application {
 
         context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-// 🔥 RENDER TYLKO VIEWPORTU
+        // 🔥 RENDER TYLKO VIEWPORTU
         for (int y = 0; y < VIEW_HEIGHT; y++) {
             for (int x = 0; x < VIEW_WIDTH; x++) {
 

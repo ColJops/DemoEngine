@@ -27,24 +27,33 @@ public class Tiles {
     }
 
     static {
+        //Gracz
+        tileMap.put("player", new Tile(27, 0));
+        //Jaskinia
         tileMap.put("empty", new Tile(0, 0));
         tileMap.put("wall", new Tile(10, 17));
-        tileMap.put("forest_wall", new Tile(3, 1));         // Las
-        tileMap.put("forest_floor", new Tile(6, 0));        //
         tileMap.put("floor", new Tile(2, 0));
-        tileMap.put("player", new Tile(27, 0));
         tileMap.put("skeleton", new Tile(29, 6));
-        tileMap.put("potion_health", new Tile(17, 25));     // Mikstura Uzdrowienia
-        tileMap.put("door", new Tile(1, 9));                // Drzwi
+        tileMap.put("bat", new Tile(26, 8));
+        //Przedmioty
+        tileMap.put("potion_health", new Tile(17, 25));
+        tileMap.put("sword", new Tile(0, 29));
+        tileMap.put("shield", new Tile(5, 26));
+        //Drzwi i klucze
+        tileMap.put("door", new Tile(1, 9));
         tileMap.put("door_blue", new Tile(3, 3));
         tileMap.put("door_red", new Tile(0, 9));
         tileMap.put("door_gold", new Tile(23,11));
         tileMap.put("key_blue", new Tile(17, 23));
         tileMap.put("key_red", new Tile(18, 23));
         tileMap.put("key_gold", new Tile(16, 23));
-        tileMap.put("bat", new Tile(26, 8));
-        tileMap.put("sword", new Tile(0, 29));              //Ekwipunek
-        tileMap.put("shield", new Tile(5, 26));
+        //Las
+        tileMap.put("forest_wall", new Tile(3, 1));
+        tileMap.put("forest_floor", new Tile(6, 0));
+        tileMap.put("spider", new Tile(29, 5));
+        tileMap.put("scorpion", new Tile(26, 5));
+        tileMap.put("wasp", new Tile(27, 5));
+        tileMap.put("beetle", new Tile(30, 5));
     }
 
     public static void drawTile(GraphicsContext context, Drawable d, int x, int y, GameMap map) {

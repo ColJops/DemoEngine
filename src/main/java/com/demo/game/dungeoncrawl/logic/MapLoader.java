@@ -1,8 +1,7 @@
 package com.demo.game.dungeoncrawl.logic;
 
 import com.demo.game.dungeoncrawl.model.*;
-import com.demo.game.dungeoncrawl.model.enemy.Bat;
-import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
+import com.demo.game.dungeoncrawl.model.enemy.*;
 import com.demo.game.dungeoncrawl.model.item.*;
 import com.demo.game.dungeoncrawl.model.map.BiomeType;
 import com.demo.game.dungeoncrawl.model.map.Cell;
@@ -11,6 +10,8 @@ import com.demo.game.dungeoncrawl.model.map.GameMap;
 
 import java.io.InputStream;
 import java.util.Scanner;
+
+import static com.demo.game.dungeoncrawl.model.map.BiomeType.FOREST;
 
 public class MapLoader {
     public static GameMap loadMap(String mapName) {
@@ -22,7 +23,11 @@ public class MapLoader {
         scanner.nextLine();
 
         GameMap map = new GameMap(width, height, CellType.EMPTY);
-
+        if (mapName.matches("map([1-9])\\.txt")) {
+            map.setBiome(BiomeType.DUNGEON);
+        } else {
+            map.setBiome(BiomeType.FOREST);
+        }
         for (int y = 0; y < height; y++) {
             String line = scanner.nextLine();
 
@@ -50,8 +55,18 @@ public class MapLoader {
 
                     case 's':
                         cell.setType(CellType.FLOOR);
-                        Skeleton skeleton = new Skeleton(cell);
-                        map.addActor(skeleton);
+                        if (map.getBiome() == BiomeType.FOREST) {
+                            double r = Math.random();
+                            if (r < 0.5) {
+                                map.addActor(new Spider(cell));
+                            } else if (r < 0.8) {
+                                map.addActor(new Wasp(cell));
+                            } else {
+                                map.addActor(new Scorpion(cell));
+                            }
+                        } else {
+                            map.addActor(new Skeleton(cell));
+                        }
                         break;
 
                     case ' ':
@@ -116,12 +131,6 @@ public class MapLoader {
                 }
             }
         }
-        if (mapName.matches("map([1-9])\\.txt")) {
-            map.setBiome(BiomeType.DUNGEON);
-        } else {
-            map.setBiome(BiomeType.FOREST);
-        }
-
         return map;
     }
 

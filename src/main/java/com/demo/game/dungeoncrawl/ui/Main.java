@@ -14,18 +14,21 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
+import javafx.stage.StageStyle;
 
 public class Main extends Application {
 
     private GameMap map;
     private GameEngine engine;
     private Canvas canvas;
+    private Canvas minimap;
     public static Main instance;
 
     //HUD
@@ -56,7 +59,14 @@ public class Main extends Application {
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
 
-        Scene scene = new Scene(createContent(), canvasWidth + 260, canvasHeight);
+        int uiHeight = 200; // minimapa + log
+        int topBarHeight = 30;
+
+        Scene scene = new Scene(
+                createContent(),
+                canvasWidth + 260,
+                canvasHeight + uiHeight + topBarHeight
+        );
 
         scene.setOnKeyPressed(event -> {
             switch (event.getCode()) {
@@ -83,6 +93,7 @@ public class Main extends Application {
         });
 
         stage.setScene(scene);
+        stage.initStyle(StageStyle.UNDECORATED);
         stage.setResizable(false);
         stage.sizeToScene();
         stage.show();
@@ -105,14 +116,26 @@ public class Main extends Application {
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
 
         canvas = new Canvas(canvasWidth, canvasHeight);
+        minimap = new Canvas(150, 150);
 
         BorderPane root = new BorderPane();
+
+        // 🎮 środek (gra)
         root.setCenter(canvas);
 
+        // 👉 prawa strona (HUD)
         VBox ui = createUI();
         ui.setPrefWidth(260);
-        root.setStyle("-fx-background-color: black;");
         root.setRight(ui);
+
+        // 👉 dół (minimapa + log)
+        HBox bottomBar = new HBox(10, minimap, logArea);
+        bottomBar.setStyle("-fx-background-color: #111; -fx-padding: 10;");
+        bottomBar.setPrefHeight(160);
+
+        root.setBottom(bottomBar);
+        root.setTop(createTopBar());
+        root.setStyle("-fx-background-color: black;");
 
         refresh();
 
@@ -171,12 +194,12 @@ public class Main extends Application {
         inventoryScroll.setPrefHeight(150);
         inventoryScroll.setFitToWidth(true);
 
-        Label logTitle = new Label("COMBAT LOG");
-        logTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+        logArea = new TextArea();
+        logArea.setEditable(false);
 
         logArea = new TextArea();
         logArea.setEditable(false);
-        logArea.setPrefHeight(200);
+        logArea.setPrefHeight(140);
 
         hud.getChildren().addAll(
                 title,
@@ -184,9 +207,7 @@ public class Main extends Application {
                 equipmentTitle,
                 equipmentBox,
                 inventoryTitle,
-                inventoryScroll,
-                logTitle,
-                logArea
+                inventoryScroll
         );
 
         for (var node : hud.getChildren()) {
@@ -254,6 +275,7 @@ public class Main extends Application {
 
         canvas.requestFocus();
         updateHUD();
+        drawMinimap();
     }
 
     public void addLog(String text) {
@@ -393,7 +415,51 @@ public class Main extends Application {
         canvas.setHeight(VIEW_HEIGHT * Tiles.TILE_HEIGHT);
     }
 
+    private void drawMinimap() {
 
+        GraphicsContext g = minimap.getGraphicsContext2D();
+
+        g.clearRect(0, 0, minimap.getWidth(), minimap.getHeight());
+
+        double scaleX = minimap.getWidth() / map.getWidth();
+        double scaleY = minimap.getHeight() / map.getHeight();
+
+        for (int y = 0; y < map.getHeight(); y++) {
+            for (int x = 0; x < map.getWidth(); x++) {
+
+                Cell cell = map.getCell(x, y);
+                if (cell == null) continue;
+
+                if (cell.getType() == com.demo.game.dungeoncrawl.model.map.CellType.WALL) {
+                    g.setFill(javafx.scene.paint.Color.DARKGRAY);
+                } else {
+                    g.setFill(javafx.scene.paint.Color.BLACK);
+                }
+
+                g.fillRect(x * scaleX, y * scaleY, scaleX, scaleY);
+            }
+        }
+
+        // 🔴 player
+        Player p = map.getPlayer();
+        g.setFill(javafx.scene.paint.Color.RED);
+        g.fillOval(
+                p.getX() * scaleX,
+                p.getY() * scaleY,
+                scaleX,
+                scaleY
+        );
+    }
+
+    private HBox createTopBar() {
+        Label title = new Label("Dungeon Crawl");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+        HBox bar = new HBox(title);
+        bar.setStyle("-fx-background-color: #222; -fx-padding: 5;");
+
+        return bar;
+    }
 
     public static void main(String[] args) {
         launch(args);

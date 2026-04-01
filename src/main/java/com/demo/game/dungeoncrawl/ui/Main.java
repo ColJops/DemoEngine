@@ -8,6 +8,7 @@ import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -20,8 +21,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Button;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
 import javafx.stage.StageStyle;
+
+import static com.demo.game.dungeoncrawl.model.map.CellType.WALL;
 
 public class Main extends Application {
 
@@ -63,7 +69,7 @@ public class Main extends Application {
         int topBarHeight = 30;
 
         Scene scene = new Scene(
-                createContent(),
+                createContent(stage),
                 canvasWidth + 260,
                 canvasHeight + uiHeight + topBarHeight
         );
@@ -110,7 +116,7 @@ public class Main extends Application {
         timer.start();
     }
 
-    private Parent createContent() {
+    private Parent createContent(Stage stage) {
 
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
@@ -130,11 +136,13 @@ public class Main extends Application {
 
         // 👉 dół (minimapa + log)
         HBox bottomBar = new HBox(10, minimap, logArea);
+        VBox centerBox = new VBox(canvas);
+        root.setCenter(centerBox);
         bottomBar.setStyle("-fx-background-color: #111; -fx-padding: 10;");
         bottomBar.setPrefHeight(160);
 
         root.setBottom(bottomBar);
-        root.setTop(createTopBar());
+        root.setTop(createTopBar(stage));
         root.setStyle("-fx-background-color: black;");
 
         refresh();
@@ -200,6 +208,10 @@ public class Main extends Application {
         logArea = new TextArea();
         logArea.setEditable(false);
         logArea.setPrefHeight(140);
+        logArea.setStyle("""
+             -fx-control-inner-background: #1e1e1e;
+             -fx-text-fill: #cccccc;
+            """);
 
         hud.getChildren().addAll(
                 title,
@@ -424,13 +436,14 @@ public class Main extends Application {
         double scaleX = minimap.getWidth() / map.getWidth();
         double scaleY = minimap.getHeight() / map.getHeight();
 
+        Cell cell = null;
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
 
-                Cell cell = map.getCell(x, y);
+                cell = map.getCell(x, y);
                 if (cell == null) continue;
 
-                if (cell.getType() == com.demo.game.dungeoncrawl.model.map.CellType.WALL) {
+                if (cell.getType() == WALL) {
                     g.setFill(javafx.scene.paint.Color.DARKGRAY);
                 } else {
                     g.setFill(javafx.scene.paint.Color.BLACK);
@@ -451,14 +464,90 @@ public class Main extends Application {
         );
     }
 
-    private HBox createTopBar() {
+    private HBox createTopBar(Stage stage) {
+
+        final double[] xOffset = {0};
+        final double[] yOffset = {0};
+
         Label title = new Label("Dungeon Crawl");
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
 
-        HBox bar = new HBox(title);
-        bar.setStyle("-fx-background-color: #222; -fx-padding: 5;");
+        Button restartBtn = new Button("Restart");
+        Button levelBtn = new Button("Restart Level");
+        Button saveBtn = new Button("Save");
+        Button loadBtn = new Button("Load");
+        Button closeBtn = new Button("X");
 
+        closeBtn.setOnAction(e -> stage.close());
+
+        // styl
+        String btnStyle = "-fx-background-color: #333; -fx-text-fill: white;";
+        String hoverStyle = """
+                -fx-background-color: #555;
+                -fx-text-fill: white;
+            """;
+        styleButton(levelBtn);
+        styleButton(saveBtn);
+        styleButton(loadBtn);
+        styleButton(restartBtn);
+        closeBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
+        //Działające przyciski
+        restartBtn.setOnAction(e -> {
+            currentLevel = 1;
+
+            this.map = MapLoader.loadMap("map1.txt");
+            this.engine = new GameEngine(map);
+
+            refresh();
+            log("Game restarted");
+        });
+        levelBtn.setOnAction(e -> {
+            String mapName = "map" + currentLevel + ".txt";
+
+            this.map = MapLoader.loadMap(mapName);
+            this.engine = new GameEngine(map);
+
+            refresh();
+            log("Level restarted");
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox bar = new HBox(10,
+                title,
+                restartBtn,
+                levelBtn,
+                saveBtn,
+                loadBtn,
+                spacer,
+                closeBtn
+        );
+        bar.setPadding(new Insets(5, 10, 5, 10));
+
+        bar.setStyle("-fx-background-color: #222; -fx-padding: 5;");
+        bar.setOnMousePressed(e -> {
+            xOffset[0] = e.getSceneX();
+            yOffset[0] = e.getSceneY();
+        });
+
+        bar.setOnMouseDragged(e -> {
+            Stage stageRef = (Stage) bar.getScene().getWindow();
+            stageRef.setX(e.getScreenX() - xOffset[0]);
+            stageRef.setY(e.getScreenY() - yOffset[0]);
+        });
         return bar;
+    }
+
+    private void styleButton(Button btn) {
+
+        String normal = "-fx-background-color: #333; -fx-text-fill: white;";
+        String hover = "-fx-background-color: #555; -fx-text-fill: white;";
+
+        btn.setStyle(normal);
+
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(normal));
     }
 
     public static void main(String[] args) {

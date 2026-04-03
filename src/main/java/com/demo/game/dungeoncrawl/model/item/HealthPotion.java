@@ -6,7 +6,7 @@ import com.demo.game.dungeoncrawl.ui.Main;
 
 public class HealthPotion extends Item {
 
-    public HealthPotion() {
+    public HealthPotion(Object o) {
         super("Health Potion", ItemType.CONSUMABLE, "potion_health");
     }
 

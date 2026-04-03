@@ -11,8 +11,6 @@ import com.demo.game.dungeoncrawl.model.map.GameMap;
 import java.io.InputStream;
 import java.util.Scanner;
 
-import static com.demo.game.dungeoncrawl.model.map.BiomeType.FOREST;
-
 public class MapLoader {
     public static GameMap loadMap(String mapName) {
         InputStream is = MapLoader.class.getResourceAsStream("/" + mapName);
@@ -75,7 +73,7 @@ public class MapLoader {
 
                     case 'p':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new HealthPotion());
+                        cell.setItem(new HealthPotion(null));
                         break;
 
                     case 'k':

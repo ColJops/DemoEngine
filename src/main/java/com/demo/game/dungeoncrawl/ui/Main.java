@@ -510,6 +510,38 @@ public class Main extends Application {
             refresh();
             log("Level restarted");
         });
+        saveBtn.setOnAction(e -> {
+            SaveManager.save(map, currentLevel);
+            log("Game saved");
+        });
+        loadBtn.setOnAction(e -> {
+
+            SaveData data = SaveManager.load();
+
+            currentLevel = data.level;
+
+            GameMap newMap = MapLoader.loadMap("map" + currentLevel + ".txt");
+            Player player = newMap.getPlayer();
+
+            player.setKills(data.kills);
+            player.takeDamage(-(data.hp - player.getHp()));
+
+            // inventory
+            for (String itemName : data.items) {
+
+                if (itemName.equals("Health Potion")) {
+                    player.getInventory().add(new HealthPotion(null));
+                }
+
+                // później  więcej typów
+            }
+
+            this.map = newMap;
+            this.engine = new GameEngine(map);
+
+            refresh();
+            log("Game loaded");
+        });
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

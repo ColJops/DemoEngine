@@ -1,73 +1,99 @@
 package com.demo.game.dungeoncrawl.ui;
 
+import com.demo.game.dungeoncrawl.dto.*;
 import com.demo.game.dungeoncrawl.model.*;
-import com.demo.game.dungeoncrawl.model.item.*;
-import com.demo.game.dungeoncrawl.model.map.GameMap;
+import com.demo.game.dungeoncrawl.model.map.*;
+import com.demo.game.dungeoncrawl.model.enemy.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.*;
-import java.util.*;
 
 public class SaveManager {
 
-    private static final String SAVE_FILE = "save.txt";
-
     public static void save(GameMap map, int currentLevel) {
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(SAVE_FILE))) {
+        SaveData data = new SaveData();
+        data.level = currentLevel;
 
-            Player player = map.getPlayer();
-            writer.println("x=" + player.getX());
-            writer.println("y=" + player.getY());
-            writer.println("level=" + currentLevel);
-            writer.println("hp=" + player.getHp());
-            writer.println("kills=" + player.getKills());
+        Player player = map.getPlayer();
 
-            writer.println("weapon=" + (player.getEquippedWeapon() != null
-                    ? player.getEquippedWeapon().getClass().getSimpleName()
-                    : "none"));
+        // PLAYER
+        PlayerData pd = new PlayerData();
+        pd.x = player.getX();
+        pd.y = player.getY();
+        pd.hp = player.getHp();
+        pd.kills = player.getKills();
 
-            writer.println("shield=" + (player.getEquippedShield() != null
-                    ? player.getEquippedShield().getClass().getSimpleName()
-                    : "none"));
+        pd.weapon = player.getEquippedWeapon() != null
+                ? player.getEquippedWeapon().getName()
+                : null;
 
-            // inventory
-            for (Item item : player.getInventory()) {
-                writer.println("item=" + item.getClass().getSimpleName());
+        pd.shield = player.getEquippedShield() != null
+                ? player.getEquippedShield().getName()
+                : null;
+
+        for (Item item : player.getInventory()) {
+            pd.inventory.add(item.getClass().getSimpleName());
+        }
+
+        data.player = pd;
+
+        // ENEMIES
+        for (Actor actor : map.getActors()) {
+            if (actor instanceof Enemy enemy) {
+                EnemyData ed = new EnemyData();
+                ed.type = enemy.getClass().getSimpleName();
+                ed.x = enemy.getX();
+                ed.y = enemy.getY();
+                ed.hp = enemy.getHp();
+                data.enemies.add(ed);
             }
+        }
 
+        // DOORS + ITEMS
+        for (int y = 0; y < map.getHeight(); y++) {
+            for (int x = 0; x < map.getWidth(); x++) {
+
+                Cell cell = map.getCell(x, y);
+
+                // DOORS
+                if (cell.getType() == CellType.DOOR) {
+                    DoorData dd = new DoorData();
+                    dd.x = x;
+                    dd.y = y;
+                    dd.open = false; // uproszczenie
+                    data.doors.add(dd);
+                }
+
+                // ITEMS
+                if (cell.getItem() != null) {
+                    ItemData id = new ItemData();
+                    id.type = cell.getItem().getClass().getSimpleName();
+                    id.x = x;
+                    id.y = y;
+                    data.items.add(id);
+                }
+            }
+        }
+
+        // SAVE JSON
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        try (Writer writer = new FileWriter("save.json")) {
+            gson.toJson(data, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static SaveData load() {
-
-        SaveData data = new SaveData();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(SAVE_FILE))) {
-
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-
-                String[] parts = line.split("=");
-
-                switch (parts[0]) {
-                    case "x" -> data.x = Integer.parseInt(parts[1]);
-                    case "y" -> data.y = Integer.parseInt(parts[1]);
-                    case "level" -> data.level = Integer.parseInt(parts[1]);
-                    case "hp" -> data.hp = Integer.parseInt(parts[1]);
-                    case "kills" -> data.kills = Integer.parseInt(parts[1]);
-                    case "weapon" -> data.weapon = parts[1];
-                    case "shield" -> data.shield = parts[1];
-                    case "item" -> data.items.add(parts[1]);
-                }
-            }
-
-        } catch (IOException e) {
+        Gson gson = new Gson();
+        try {
+            return gson.fromJson(new FileReader("save.json"), SaveData.class);
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-
-        return data;
     }
 }

@@ -1,13 +1,22 @@
 package com.demo.game.dungeoncrawl.ui;
 
+import com.demo.game.dungeoncrawl.dto.DoorData;
+import com.demo.game.dungeoncrawl.dto.EnemyData;
+import com.demo.game.dungeoncrawl.dto.ItemData;
+import com.demo.game.dungeoncrawl.dto.SaveData;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
+import com.demo.game.dungeoncrawl.model.enemy.Bat;
+import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
+import com.demo.game.dungeoncrawl.model.enemy.Spider;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
 import com.demo.game.dungeoncrawl.model.item.Shield;
 import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
+import com.google.gson.Gson;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -29,7 +38,10 @@ import javafx.scene.layout.Priority;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
 import javafx.stage.StageStyle;
 
+import java.io.FileReader;
+
 import static com.demo.game.dungeoncrawl.model.map.CellType.WALL;
+import static javafx.application.Application.launch;
 
 public class Main extends Application {
 
@@ -470,36 +482,38 @@ public class Main extends Application {
 
         closeBtn.setOnAction(_ -> stage.close());
 
-        // styl
+        styleButton(restartBtn);
         styleButton(levelBtn);
         styleButton(saveBtn);
         styleButton(loadBtn);
-        styleButton(restartBtn);
+
         closeBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
-        //Działające przyciski
+
+        // RESTART
         restartBtn.setOnAction(_ -> {
             currentLevel = 1;
-
-            this.map = MapLoader.loadMap("map1.txt");
-            this.engine = new GameEngine(map);
-
+            map = MapLoader.loadMap("map1.txt");
+            engine = new GameEngine(map);
             refresh();
             log("Game restarted");
         });
+
+        // RESTART LEVEL
         levelBtn.setOnAction(_ -> {
-            String mapName = "map" + currentLevel + ".txt";
-
-            this.map = MapLoader.loadMap(mapName);
-            this.engine = new GameEngine(map);
-
+            map = MapLoader.loadMap("map" + currentLevel + ".txt");
+            engine = new GameEngine(map);
             refresh();
             log("Level restarted");
         });
+
+        // SAVE
         saveBtn.setOnAction(_ -> {
             SaveManager.save(map, currentLevel);
             log("Game saved");
         });
-        loadBtn.setOnAction(_-> {
+
+        // LOAD 🔥
+        loadBtn.setOnAction(_ -> {
 
             SaveData data = SaveManager.load();
 
@@ -512,36 +526,36 @@ public class Main extends Application {
 
             Player player = newMap.getPlayer();
 
-            player.setKills(data.kills);
-            player.takeDamage(-(data.hp - player.getHp()));
+            // PLAYER
+            player.setKills(data.player.kills);
+            player.setHp(data.player.hp);
+            player.setPosition(data.player.x, data.player.y, map);
 
-            // inventory
-            for (String itemType : data.items) {
-
+            // INVENTORY
+            for (String itemType : data.player.inventory) {
                 Item item = createItem(itemType, player);
-
                 if (item != null) {
                     player.getInventory().add(item);
                 }
             }
-            if (!data.weapon.equals("none")) {
-                Item weapon = createItem(data.weapon, player);
+
+            // EQUIPMENT
+            if (data.player.weapon != null) {
+                Item weapon = createItem(data.player.weapon, player);
                 if (weapon instanceof Weapon w) {
                     player.equipWeapon(w);
                 }
             }
 
-            if (!data.shield.equals("none")) {
-                Item shield = createItem(data.shield, player);
+            if (data.player.shield != null) {
+                Item shield = createItem(data.player.shield, player);
                 if (shield instanceof Shield s) {
                     player.equipShield(s);
                 }
             }
 
-            player.setPosition(data.x, data.y, map);
-
             refresh();
-
+            log("Game loaded");
         });
 
         Region spacer = new Region();
@@ -556,9 +570,10 @@ public class Main extends Application {
                 spacer,
                 closeBtn
         );
-        bar.setPadding(new Insets(5, 10, 5, 10));
 
-        bar.setStyle("-fx-background-color: #222; -fx-padding: 5;");
+        bar.setPadding(new Insets(5, 10, 5, 10));
+        bar.setStyle("-fx-background-color: #222;");
+
         bar.setOnMousePressed(e -> {
             xOffset[0] = e.getSceneX();
             yOffset[0] = e.getSceneY();
@@ -569,9 +584,9 @@ public class Main extends Application {
             stageRef.setX(e.getScreenX() - xOffset[0]);
             stageRef.setY(e.getScreenY() - yOffset[0]);
         });
+
         return bar;
     }
-
     private Item createItem(String type, Player player) {
 
         return switch (type) {
@@ -592,6 +607,7 @@ public class Main extends Application {
         btn.setOnMouseEntered(_ -> btn.setStyle(hover));
         btn.setOnMouseExited(_ -> btn.setStyle(normal));
     }
+
 
     public static void main(String[] args) {
         launch(args);

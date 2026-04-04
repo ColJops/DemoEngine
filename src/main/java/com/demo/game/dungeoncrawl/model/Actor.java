@@ -27,6 +27,14 @@ public abstract class Actor {
         return hp;
     }
 
+    public int getX() {
+        return cell.getX();
+    }
+
+    public int getY() {
+        return cell.getY();
+    }
+
     public int getAttack() {
         return attack;
     }
@@ -45,6 +53,10 @@ public abstract class Actor {
 
     public boolean isAlive() {
         return hp > 0;
+    }
+
+    public void setHp(int hp) {
+        this.hp = hp;
     }
 
 

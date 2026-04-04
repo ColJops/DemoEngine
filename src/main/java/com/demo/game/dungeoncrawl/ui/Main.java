@@ -4,12 +4,11 @@ import com.demo.game.dungeoncrawl.dto.DoorData;
 import com.demo.game.dungeoncrawl.dto.EnemyData;
 import com.demo.game.dungeoncrawl.dto.ItemData;
 import com.demo.game.dungeoncrawl.dto.SaveData;
+import com.demo.game.dungeoncrawl.logic.ChaseAI;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
-import com.demo.game.dungeoncrawl.model.enemy.Bat;
-import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
-import com.demo.game.dungeoncrawl.model.enemy.Spider;
+import com.demo.game.dungeoncrawl.model.enemy.*;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
 import com.demo.game.dungeoncrawl.model.item.Shield;
 import com.demo.game.dungeoncrawl.model.item.Weapon;
@@ -554,6 +553,16 @@ public class Main extends Application {
                 }
             }
 
+            for (ItemData id : data.items) {
+                Cell cell = map.getCell(id.x, id.y);
+
+                Item item = createItem(id.type, map.getPlayer());
+                if (item != null) {
+                    cell.setItem(item);
+                }
+            }
+
+            loadWorld(data);
             refresh();
             log("Game loaded");
         });
@@ -608,6 +617,73 @@ public class Main extends Application {
         btn.setOnMouseExited(_ -> btn.setStyle(normal));
     }
 
+    private void loadWorld(SaveData data) {
+
+        // 🔥 1. WYCZYŚĆ ENEMY Z GRIDU
+        for (int y = 0; y < map.getHeight(); y++) {
+            for (int x = 0; x < map.getWidth(); x++) {
+                Cell cell = map.getCell(x, y);
+
+                if (cell.getActor() instanceof Enemy) {
+                    cell.setActor(null);
+                }
+            }
+        }
+
+        // 🔥 2. WYCZYŚĆ LISTĘ
+        map.getActors().removeIf(a -> a instanceof Enemy);
+
+        // 🔥 3. WYCZYŚĆ ITEMY
+        for (int y = 0; y < map.getHeight(); y++) {
+            for (int x = 0; x < map.getWidth(); x++) {
+                map.getCell(x, y).setItem(null);
+            }
+        }
+
+        // 🔥 4. ENEMY
+        for (EnemyData ed : data.enemies) {
+
+            Cell cell = map.getCell(ed.x, ed.y);
+
+            Enemy enemy = switch (ed.type) {
+                case "Skeleton" -> new Skeleton(cell);
+                case "Spider" -> new Spider(cell);
+                case "Scorpion" -> new Scorpion(cell);
+                case "Wasp" -> new Wasp(cell);
+                default -> null;
+            };
+
+            if (enemy != null) {
+                enemy.setHp(ed.hp);
+
+                cell.setActor(enemy);   // 🔥 KLUCZ
+                map.addActor(enemy);
+            }
+        }
+
+        // 🔥 5. ITEMS
+        for (ItemData id : data.items) {
+            Cell cell = map.getCell(id.x, id.y);
+            Item item = createItem(id.type, map.getPlayer());
+            if (item != null) {
+                cell.setItem(item);
+            }
+        }
+
+        // 🔥 6. DOORS
+        for (DoorData dd : data.doors) {
+            Cell cell = map.getCell(dd.x, dd.y);
+
+            if (dd.open) {
+                cell.setType(CellType.FLOOR);
+            } else {
+                cell.setType(CellType.DOOR);
+            }
+        }
+
+        // 🔥 7. ENGINE RESET
+        this.engine = new GameEngine(map);
+    }
 
     public static void main(String[] args) {
         launch(args);

@@ -62,7 +62,7 @@ public class SaveManager {
                     DoorData dd = new DoorData();
                     dd.x = x;
                     dd.y = y;
-                    dd.open = false; // uproszczenie
+                    dd.open = (cell.getType() == CellType.FLOOR);
                     data.doors.add(dd);
                 }
 

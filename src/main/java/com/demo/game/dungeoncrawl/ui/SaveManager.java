@@ -16,22 +16,23 @@ public class SaveManager {
         try (PrintWriter writer = new PrintWriter(new FileWriter(SAVE_FILE))) {
 
             Player player = map.getPlayer();
-
+            writer.println("x=" + player.getX());
+            writer.println("y=" + player.getY());
             writer.println("level=" + currentLevel);
             writer.println("hp=" + player.getHp());
             writer.println("kills=" + player.getKills());
 
             writer.println("weapon=" + (player.getEquippedWeapon() != null
-                    ? player.getEquippedWeapon().getName()
+                    ? player.getEquippedWeapon().getClass().getSimpleName()
                     : "none"));
 
             writer.println("shield=" + (player.getEquippedShield() != null
-                    ? player.getEquippedShield().getName()
+                    ? player.getEquippedShield().getClass().getSimpleName()
                     : "none"));
 
             // inventory
             for (Item item : player.getInventory()) {
-                writer.println("item=" + item.getName());
+                writer.println("item=" + item.getClass().getSimpleName());
             }
 
         } catch (IOException e) {
@@ -52,6 +53,8 @@ public class SaveManager {
                 String[] parts = line.split("=");
 
                 switch (parts[0]) {
+                    case "x" -> data.x = Integer.parseInt(parts[1]);
+                    case "y" -> data.y = Integer.parseInt(parts[1]);
                     case "level" -> data.level = Integer.parseInt(parts[1]);
                     case "hp" -> data.hp = Integer.parseInt(parts[1]);
                     case "kills" -> data.kills = Integer.parseInt(parts[1]);

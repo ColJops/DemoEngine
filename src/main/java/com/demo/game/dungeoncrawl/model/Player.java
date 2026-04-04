@@ -6,6 +6,7 @@ import com.demo.game.dungeoncrawl.model.item.KeyType;
 import com.demo.game.dungeoncrawl.model.item.Shield;
 import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.Cell;
+import com.demo.game.dungeoncrawl.model.map.GameMap;
 import com.demo.game.dungeoncrawl.ui.Main;
 
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ public class Player extends Actor implements Drawable {
     private Shield equippedShield;
 
     private List<Item> inventory = new ArrayList<>();
-    private final int INVENTORY_SIZE = 10;
 
     public Player(Cell cell) {
         super(cell, 20, 6, 2);
@@ -130,6 +130,7 @@ public class Player extends Actor implements Drawable {
             // 🔥 tylko tutaj dodajemy do inventory
             inventory.add(item);
 
+            int INVENTORY_SIZE = 10;
             if (inventory.size() >= INVENTORY_SIZE) {
                 Main.log("Inventory full!");
                 return;
@@ -177,6 +178,15 @@ public class Player extends Actor implements Drawable {
 
         if (equippedShield != null) {
             defense += equippedShield.getDefenseBonus();
+        }
+    }
+
+    public void setPosition(int x, int y, GameMap map) {
+        Cell newCell = map.getCell(x, y);
+        if (newCell != null) {
+            this.cell.setActor(null);
+            this.cell = newCell;
+            this.cell.setActor(this);
         }
     }
 }

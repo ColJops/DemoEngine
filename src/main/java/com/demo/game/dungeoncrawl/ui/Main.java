@@ -4,6 +4,8 @@ import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
+import com.demo.game.dungeoncrawl.model.item.Shield;
+import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import javafx.animation.AnimationTimer;
@@ -126,9 +128,6 @@ public class Main extends Application {
 
         BorderPane root = new BorderPane();
 
-        // 🎮 środek (gra)
-        root.setCenter(canvas);
-
         // 👉 prawa strona (HUD)
         VBox ui = createUI();
         ui.setPrefWidth(260);
@@ -194,9 +193,11 @@ public class Main extends Application {
         inventoryBox = new VBox(5);
         ScrollPane inventoryScroll = new ScrollPane(inventoryBox);
         inventoryScroll.setStyle("""
-              -fx-background: #1e1e1e;
-              -fx-background-color: #1e1e1e;
-               \s""");
+             -fx-background: #1e1e1e;
+             -fx-background-color: #1e1e1e;
+            """);
+
+        //inventoryScroll.lookup(".viewport").setStyle("-fx-background-color: #1e1e1e;");
 
         inventoryBox.setStyle("-fx-background-color: #1e1e1e;");
         inventoryScroll.setPrefHeight(150);
@@ -204,13 +205,10 @@ public class Main extends Application {
 
         logArea = new TextArea();
         logArea.setEditable(false);
-
-        logArea = new TextArea();
-        logArea.setEditable(false);
         logArea.setPrefHeight(140);
         logArea.setStyle("""
-             -fx-control-inner-background: #1e1e1e;
-             -fx-text-fill: #cccccc;
+                -fx-control-inner-background: #1e1e1e;
+                -fx-text-fill: #cccccc;
             """);
 
         hud.getChildren().addAll(
@@ -229,14 +227,6 @@ public class Main extends Application {
         }
 
         return hud;
-    }
-
-    public void addItem(String name) {
-
-        Label item = new Label(name);
-        item.setStyle("-fx-text-fill: gold;");
-
-        inventoryBox.getChildren().add(item);
     }
 
     private void refresh() {
@@ -275,7 +265,7 @@ public class Main extends Application {
 
                 // item
                 if (cell.getItem() != null) {
-                    Tiles.drawTile(context, (Drawable) cell.getItem(), x, y, map);
+                    Tiles.drawTile(context, cell.getItem(), x, y, map);
                 }
 
                 // actor
@@ -436,7 +426,7 @@ public class Main extends Application {
         double scaleX = minimap.getWidth() / map.getWidth();
         double scaleY = minimap.getHeight() / map.getHeight();
 
-        Cell cell = null;
+        Cell cell;
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
 
@@ -478,21 +468,16 @@ public class Main extends Application {
         Button loadBtn = new Button("Load");
         Button closeBtn = new Button("X");
 
-        closeBtn.setOnAction(e -> stage.close());
+        closeBtn.setOnAction(_ -> stage.close());
 
         // styl
-        String btnStyle = "-fx-background-color: #333; -fx-text-fill: white;";
-        String hoverStyle = """
-                -fx-background-color: #555;
-                -fx-text-fill: white;
-            """;
         styleButton(levelBtn);
         styleButton(saveBtn);
         styleButton(loadBtn);
         styleButton(restartBtn);
         closeBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
         //Działające przyciski
-        restartBtn.setOnAction(e -> {
+        restartBtn.setOnAction(_ -> {
             currentLevel = 1;
 
             this.map = MapLoader.loadMap("map1.txt");
@@ -501,7 +486,7 @@ public class Main extends Application {
             refresh();
             log("Game restarted");
         });
-        levelBtn.setOnAction(e -> {
+        levelBtn.setOnAction(_ -> {
             String mapName = "map" + currentLevel + ".txt";
 
             this.map = MapLoader.loadMap(mapName);
@@ -510,37 +495,53 @@ public class Main extends Application {
             refresh();
             log("Level restarted");
         });
-        saveBtn.setOnAction(e -> {
+        saveBtn.setOnAction(_ -> {
             SaveManager.save(map, currentLevel);
             log("Game saved");
         });
-        loadBtn.setOnAction(e -> {
+        loadBtn.setOnAction(_-> {
 
             SaveData data = SaveManager.load();
 
             currentLevel = data.level;
 
             GameMap newMap = MapLoader.loadMap("map" + currentLevel + ".txt");
+
+            this.map = newMap;
+            this.engine = new GameEngine(map);
+
             Player player = newMap.getPlayer();
 
             player.setKills(data.kills);
             player.takeDamage(-(data.hp - player.getHp()));
 
             // inventory
-            for (String itemName : data.items) {
+            for (String itemType : data.items) {
 
-                if (itemName.equals("Health Potion")) {
-                    player.getInventory().add(new HealthPotion(null));
+                Item item = createItem(itemType, player);
+
+                if (item != null) {
+                    player.getInventory().add(item);
                 }
-
-                // później  więcej typów
+            }
+            if (!data.weapon.equals("none")) {
+                Item weapon = createItem(data.weapon, player);
+                if (weapon instanceof Weapon w) {
+                    player.equipWeapon(w);
+                }
             }
 
-            this.map = newMap;
-            this.engine = new GameEngine(map);
+            if (!data.shield.equals("none")) {
+                Item shield = createItem(data.shield, player);
+                if (shield instanceof Shield s) {
+                    player.equipShield(s);
+                }
+            }
+
+            player.setPosition(data.x, data.y, map);
 
             refresh();
-            log("Game loaded");
+
         });
 
         Region spacer = new Region();
@@ -571,6 +572,16 @@ public class Main extends Application {
         return bar;
     }
 
+    private Item createItem(String type, Player player) {
+
+        return switch (type) {
+            case "HealthPotion" -> new HealthPotion(player.getCell());
+            // później:
+            // case "Weapon" -> new Weapon(...)
+            default -> null;
+        };
+    }
+
     private void styleButton(Button btn) {
 
         String normal = "-fx-background-color: #333; -fx-text-fill: white;";
@@ -578,8 +589,8 @@ public class Main extends Application {
 
         btn.setStyle(normal);
 
-        btn.setOnMouseEntered(e -> btn.setStyle(hover));
-        btn.setOnMouseExited(e -> btn.setStyle(normal));
+        btn.setOnMouseEntered(_ -> btn.setStyle(hover));
+        btn.setOnMouseExited(_ -> btn.setStyle(normal));
     }
 
     public static void main(String[] args) {

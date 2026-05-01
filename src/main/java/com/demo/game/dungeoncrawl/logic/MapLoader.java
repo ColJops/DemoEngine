@@ -1,7 +1,6 @@
 package com.demo.game.dungeoncrawl.logic;
 
 import com.demo.game.dungeoncrawl.model.*;
-import com.demo.game.dungeoncrawl.model.enemy.*;
 import com.demo.game.dungeoncrawl.model.item.*;
 import com.demo.game.dungeoncrawl.model.map.BiomeType;
 import com.demo.game.dungeoncrawl.model.map.Cell;
@@ -54,16 +53,9 @@ public class MapLoader {
                     case 's':
                         cell.setType(CellType.FLOOR);
                         if (map.getBiome() == BiomeType.FOREST) {
-                            double r = Math.random();
-                            if (r < 0.5) {
-                                map.addActor(new Spider(cell));
-                            } else if (r < 0.8) {
-                                map.addActor(new Wasp(cell));
-                            } else {
-                                map.addActor(new Scorpion(cell));
-                            }
+                            map.addActor(GameObjectFactory.createRandomForestEnemy(cell));
                         } else {
-                            map.addActor(new Skeleton(cell));
+                            map.addActor(GameObjectFactory.createEnemy("Skeleton", cell));
                         }
                         break;
 
@@ -73,22 +65,22 @@ public class MapLoader {
 
                     case 'p':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new HealthPotion(null));
+                        cell.setItem(GameObjectFactory.createItem("HealthPotion"));
                         break;
 
                     case 'k':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new Key(KeyType.BLUE));
+                        cell.setItem(GameObjectFactory.createItem("Key:BLUE"));
                         break;
 
                     case 'r':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new Key(KeyType.RED));
+                        cell.setItem(GameObjectFactory.createItem("Key:RED"));
                         break;
 
                     case 'g':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new Key(KeyType.GOLD));
+                        cell.setItem(GameObjectFactory.createItem("Key:GOLD"));
                         break;
 
                     case 'D':
@@ -110,18 +102,17 @@ public class MapLoader {
 
                     case 'b':
                         cell.setType(CellType.FLOOR);
-                        Bat bat = new Bat(cell);
-                        map.addActor(bat);
+                        map.addActor(GameObjectFactory.createEnemy("Bat", cell));
                         break;
 
                     case 't':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new Shield("Wooden Shield", 1));
+                        cell.setItem(GameObjectFactory.createItem("Shield:1:Wooden Shield"));
                         break;
 
                     case 'm':
                         cell.setType(CellType.FLOOR);
-                        cell.setItem(new Weapon("Iron Sword", 2));
+                        cell.setItem(GameObjectFactory.createItem("Weapon:2:Iron Sword"));
                         break;
 
                     default:

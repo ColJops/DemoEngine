@@ -14,7 +14,7 @@ public class Tiles {
     public static int TILE_WIDTH = 32;
     public static int TILE_HEIGHT = 32;
 
-    private static Image tileset = new Image("/tiles.png", 543 * 2, 543 * 2, true, false);
+    private static Image tileset;
     private static Map<String, Tile> tileMap = new HashMap<>();
     public static class Tile {
         public final int x, y, w, h;
@@ -41,8 +41,8 @@ public class Tiles {
         tileMap.put("shield", new Tile(5, 26));
         //Drzwi i klucze
         tileMap.put("door", new Tile(1, 9));
-        tileMap.put("door_blue", new Tile(3, 3));
-        tileMap.put("door_red", new Tile(0, 9));
+        tileMap.put("door_blue", new Tile(0, 9));
+        tileMap.put("door_red", new Tile(3, 9));
         tileMap.put("door_gold", new Tile(23,11));
         tileMap.put("key_blue", new Tile(17, 23));
         tileMap.put("key_red", new Tile(18, 23));
@@ -77,7 +77,19 @@ public class Tiles {
             return;
         }
 
-        context.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
+        context.drawImage(getTileset(), tile.x, tile.y, tile.w, tile.h,
                 x * TILE_WIDTH, y * TILE_WIDTH, TILE_WIDTH, TILE_HEIGHT);
+    }
+
+    static Tile getTile(String tileName) {
+        return tileMap.get(tileName);
+    }
+
+    private static Image getTileset() {
+        if (tileset == null) {
+            tileset = new Image("/tiles.png", 543 * 2, 543 * 2, true, false);
+        }
+
+        return tileset;
     }
 }

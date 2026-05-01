@@ -1,21 +1,12 @@
 package com.demo.game.dungeoncrawl.ui;
 
-import com.demo.game.dungeoncrawl.dto.DoorData;
-import com.demo.game.dungeoncrawl.dto.EnemyData;
-import com.demo.game.dungeoncrawl.dto.ItemData;
 import com.demo.game.dungeoncrawl.dto.SaveData;
-import com.demo.game.dungeoncrawl.logic.ChaseAI;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.logic.MapLoader;
-import com.demo.game.dungeoncrawl.model.enemy.*;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
-import com.demo.game.dungeoncrawl.model.item.Shield;
-import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.Cell;
-import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
-import com.google.gson.Gson;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -36,8 +27,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.Priority;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
 import javafx.stage.StageStyle;
-
-import java.io.FileReader;
 
 import static com.demo.game.dungeoncrawl.model.map.CellType.WALL;
 import static javafx.application.Application.launch;
@@ -516,53 +505,16 @@ public class Main extends Application {
 
             SaveData data = SaveManager.load();
 
+            GameMap loadedMap = SaveManager.restoreMap(data);
+            if (loadedMap == null) {
+                log("Could not load game");
+                return;
+            }
+
             currentLevel = data.level;
-
-            GameMap newMap = MapLoader.loadMap("map" + currentLevel + ".txt");
-
-            this.map = newMap;
+            this.map = loadedMap;
             this.engine = new GameEngine(map);
 
-            Player player = newMap.getPlayer();
-
-            // PLAYER
-            player.setKills(data.player.kills);
-            player.setHp(data.player.hp);
-            player.setPosition(data.player.x, data.player.y, map);
-
-            // INVENTORY
-            for (String itemType : data.player.inventory) {
-                Item item = createItem(itemType, player);
-                if (item != null) {
-                    player.getInventory().add(item);
-                }
-            }
-
-            // EQUIPMENT
-            if (data.player.weapon != null) {
-                Item weapon = createItem(data.player.weapon, player);
-                if (weapon instanceof Weapon w) {
-                    player.equipWeapon(w);
-                }
-            }
-
-            if (data.player.shield != null) {
-                Item shield = createItem(data.player.shield, player);
-                if (shield instanceof Shield s) {
-                    player.equipShield(s);
-                }
-            }
-
-            for (ItemData id : data.items) {
-                Cell cell = map.getCell(id.x, id.y);
-
-                Item item = createItem(id.type, map.getPlayer());
-                if (item != null) {
-                    cell.setItem(item);
-                }
-            }
-
-            loadWorld(data);
             refresh();
             log("Game loaded");
         });
@@ -596,16 +548,6 @@ public class Main extends Application {
 
         return bar;
     }
-    private Item createItem(String type, Player player) {
-
-        return switch (type) {
-            case "HealthPotion" -> new HealthPotion(player.getCell());
-            // później:
-            // case "Weapon" -> new Weapon(...)
-            default -> null;
-        };
-    }
-
     private void styleButton(Button btn) {
 
         String normal = "-fx-background-color: #333; -fx-text-fill: white;";
@@ -615,74 +557,6 @@ public class Main extends Application {
 
         btn.setOnMouseEntered(_ -> btn.setStyle(hover));
         btn.setOnMouseExited(_ -> btn.setStyle(normal));
-    }
-
-    private void loadWorld(SaveData data) {
-
-        // 🔥 1. WYCZYŚĆ ENEMY Z GRIDU
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
-                Cell cell = map.getCell(x, y);
-
-                if (cell.getActor() instanceof Enemy) {
-                    cell.setActor(null);
-                }
-            }
-        }
-
-        // 🔥 2. WYCZYŚĆ LISTĘ
-        map.getActors().removeIf(a -> a instanceof Enemy);
-
-        // 🔥 3. WYCZYŚĆ ITEMY
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
-                map.getCell(x, y).setItem(null);
-            }
-        }
-
-        // 🔥 4. ENEMY
-        for (EnemyData ed : data.enemies) {
-
-            Cell cell = map.getCell(ed.x, ed.y);
-
-            Enemy enemy = switch (ed.type) {
-                case "Skeleton" -> new Skeleton(cell);
-                case "Spider" -> new Spider(cell);
-                case "Scorpion" -> new Scorpion(cell);
-                case "Wasp" -> new Wasp(cell);
-                default -> null;
-            };
-
-            if (enemy != null) {
-                enemy.setHp(ed.hp);
-
-                cell.setActor(enemy);   // 🔥 KLUCZ
-                map.addActor(enemy);
-            }
-        }
-
-        // 🔥 5. ITEMS
-        for (ItemData id : data.items) {
-            Cell cell = map.getCell(id.x, id.y);
-            Item item = createItem(id.type, map.getPlayer());
-            if (item != null) {
-                cell.setItem(item);
-            }
-        }
-
-        // 🔥 6. DOORS
-        for (DoorData dd : data.doors) {
-            Cell cell = map.getCell(dd.x, dd.y);
-
-            if (dd.open) {
-                cell.setType(CellType.FLOOR);
-            } else {
-                cell.setType(CellType.DOOR);
-            }
-        }
-
-        // 🔥 7. ENGINE RESET
-        this.engine = new GameEngine(map);
     }
 
     public static void main(String[] args) {

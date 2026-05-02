@@ -11,5 +11,6 @@ public class SaveData {
     public List<EnemyData> enemies = new ArrayList<>();
     public List<DoorData> doors = new ArrayList<>();
     public List<ItemData> items = new ArrayList<>();
+    public long timestamp;
 }
 

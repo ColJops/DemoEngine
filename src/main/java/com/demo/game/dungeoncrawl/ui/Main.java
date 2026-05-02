@@ -95,6 +95,20 @@ public class Main extends Application {
                 case DIGIT3: useItem(2); break;
                 case DIGIT4: useItem(3); break;
                 case DIGIT5: useItem(4); break;
+                //Quick save/load
+                case F5:
+                    SaveManager.save(map, session.getCurrentLevel(), 0);
+                    log("Quick saved");
+                    break;
+
+                case F9:
+                    SaveData data = SaveManager.load(0);
+                    if (data != null && session.load(data)) {
+                        syncFromSession();
+                        refresh();
+                        log("Quick loaded");
+                    }
+                    break;
             }
             refresh();
         });
@@ -462,26 +476,10 @@ public class Main extends Application {
         });
 
         // SAVE
-        saveBtn.setOnAction(_ -> {
-            SaveManager.save(map, session.getCurrentLevel());
-            log("Game saved");
-        });
+        saveBtn.setOnAction(_ -> showSaveDialog());
 
-        // LOAD 🔥
-        loadBtn.setOnAction(_ -> {
-
-            SaveData data = SaveManager.load();
-
-            if (!session.load(data)) {
-                log("Could not load game");
-                return;
-            }
-
-            syncFromSession();
-
-            refresh();
-            log("Game loaded");
-        });
+        // LOAD
+        loadBtn.setOnAction(_ -> showLoadDialog());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -526,6 +524,121 @@ public class Main extends Application {
 
         btn.setOnMouseEntered(_ -> btn.setStyle(hover));
         btn.setOnMouseExited(_ -> btn.setStyle(normal));
+    }
+
+    private void showSaveDialog() {
+
+        Stage dialog = new Stage();
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.setTitle("Save Game");
+
+        VBox layout = new VBox(10);
+        layout.setStyle("-fx-background-color: #222; -fx-padding: 15;");
+
+        for (int i = 1; i <= 5; i++) {
+            int slot = i;
+
+            boolean exists = SaveManager.exists(slot);
+            SaveData data = exists ? SaveManager.load(slot) : null;
+
+            String label;
+
+            if (data != null) {
+                label = "Overwrite " + slot +
+                        " (Lv " + data.level +
+                        ", HP " + data.player.hp +
+                        ", " + SaveManager.formatTime(data.timestamp) + ")";
+            } else {
+                label = "Save Slot " + slot + " (Empty)";
+            }
+
+            Button saveBtn = new Button(label);
+            styleButton(saveBtn);
+
+            Button deleteBtn = new Button("X");
+            deleteBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
+            deleteBtn.setDisable(!exists);
+
+            saveBtn.setOnAction(_ -> {
+                SaveManager.save(map, session.getCurrentLevel(), slot);
+                log("Saved to slot " + slot);
+                dialog.close();
+            });
+
+            deleteBtn.setOnAction(_ -> {
+                SaveManager.delete(slot);
+                log("Deleted slot " + slot);
+                dialog.close();
+            });
+
+            HBox row = new HBox(10, saveBtn, deleteBtn);
+            layout.getChildren().add(row);
+        }
+
+        Scene scene = new Scene(layout, 350, 250);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    private void showLoadDialog() {
+
+        Stage dialog = new Stage();
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.setTitle("Load Game");
+
+        VBox layout = new VBox(10);
+        layout.setStyle("-fx-background-color: #222; -fx-padding: 15;");
+
+        for (int i = 1; i <= 5; i++) {
+            int slot = i;
+
+            SaveData data = SaveManager.exists(slot)
+                    ? SaveManager.load(slot)
+                    : null;
+
+            String label;
+
+            if (data != null) {
+                label = "Slot " + slot +
+                        " (Lv " + data.level +
+                        ", HP " + data.player.hp +
+                        ", " + SaveManager.formatTime(data.timestamp) + ")";
+            } else {
+                label = "Empty Slot " + slot;
+            }
+
+            Button loadBtn = new Button(label);
+            styleButton(loadBtn);
+
+            Button deleteBtn = new Button("X");
+            deleteBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
+            deleteBtn.setDisable(data == null);
+
+            loadBtn.setOnAction(_ -> {
+                if (data == null || !session.load(data)) {
+                    log("Empty slot " + slot);
+                    return;
+                }
+
+                syncFromSession();
+                refresh();
+                log("Loaded slot " + slot);
+                dialog.close();
+            });
+
+            deleteBtn.setOnAction(_ -> {
+                SaveManager.delete(slot);
+                log("Deleted slot " + slot);
+                dialog.close();
+            });
+
+            HBox row = new HBox(10, loadBtn, deleteBtn);
+            layout.getChildren().add(row);
+        }
+
+        Scene scene = new Scene(layout, 350, 250);
+        dialog.setScene(scene);
+        dialog.showAndWait();
     }
 
     public static void main(String[] args) {

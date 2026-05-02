@@ -13,19 +13,29 @@ import java.nio.file.Path;
 
 public class SaveManager {
 
-    public static void save(GameMap map, int currentLevel) {
-        save(map, currentLevel, Path.of("save.json"));
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    // =========================
+    // SAVE (SLOT)
+    // =========================
+    public static void save(GameMap map, int level, int slot) {
+        Path path = Path.of("save_slot_" + slot + ".json");
+        save(map, level, path);
     }
 
-    public static void save(GameMap map, int currentLevel, Path savePath) {
+    // =========================
+    // SAVE (CORE)
+    // =========================
+    public static void save(GameMap map, int level, Path path) {
 
         SaveData data = new SaveData();
         data.version = SaveData.CURRENT_VERSION;
-        data.level = currentLevel;
+        data.level = level;
+        data.timestamp = System.currentTimeMillis();
 
         Player player = map.getPlayer();
 
-        // PLAYER
+        // ===== PLAYER =====
         PlayerData pd = new PlayerData();
         pd.x = player.getX();
         pd.y = player.getY();
@@ -46,7 +56,7 @@ public class SaveManager {
 
         data.player = pd;
 
-        // ENEMIES
+        // ===== ENEMIES =====
         for (Actor actor : map.getActors()) {
             if (actor instanceof Enemy enemy) {
                 EnemyData ed = new EnemyData();
@@ -58,7 +68,7 @@ public class SaveManager {
             }
         }
 
-        // DOORS + ITEMS
+        // ===== MAP (DOORS + ITEMS) =====
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
 
@@ -86,31 +96,71 @@ public class SaveManager {
             }
         }
 
-        // SAVE JSON
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-        try (Writer writer = Files.newBufferedWriter(savePath)) {
-            gson.toJson(data, writer);
+        // ===== WRITE JSON =====
+        try (Writer writer = Files.newBufferedWriter(path)) {
+            GSON.toJson(data, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static SaveData load() {
-        return load(Path.of("save.json"));
-    }
+    // =========================
+    // LOAD (SLOT)
+    // =========================
+    public static SaveData load(int slot) {
+        Path path = Path.of("save_slot_" + slot + ".json");
 
-    public static SaveData load(Path savePath) {
-        Gson gson = new Gson();
-        try (Reader reader = Files.newBufferedReader(savePath)) {
-            return SaveMigrator.migrate(gson.fromJson(reader, SaveData.class));
+        if (!Files.exists(path)) {
+            return null; // ✔ brak pliku = OK
+        }
+
+        try {
+            String json = Files.readString(path);
+            return GSON.fromJson(json, SaveData.class);
         } catch (Exception e) {
+            System.out.println("Error reading save: " + path);
             e.printStackTrace();
             return null;
         }
     }
 
+    // =========================
+    // LOAD (CORE)
+    // =========================
+    public static SaveData load(Path path) {
+        try (Reader reader = Files.newBufferedReader(path)) {
+            SaveData data = GSON.fromJson(reader, SaveData.class);
+            return SaveMigrator.migrate(data);
+        } catch (Exception e) {
+            if (!Files.exists(path)) {
+                return null; // cisza, to normalne
+            }
+            return null;
+        }
+    }
+
+    // =========================
+    // RESTORE MAP (OPTIONAL)
+    // =========================
     public static GameMap restoreMap(SaveData data) {
         return MapRestorer.restore(SaveMigrator.migrate(data));
+    }
+
+    public static boolean exists(int slot) {
+        return Files.exists(Path.of("save_slot_" + slot + ".json"));
+    }
+
+    //Formatowanie czasu
+    public static String formatTime(long timestamp) {
+        return new java.text.SimpleDateFormat("dd.MM HH:mm")
+                .format(new java.util.Date(timestamp));
+    }
+
+    public static void delete(int slot) {
+        try {
+            Files.deleteIfExists(Path.of("save_slot_" + slot + ".json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

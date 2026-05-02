@@ -59,9 +59,65 @@ class SaveManagerTest {
         assertEquals("Iron Sword", player.getEquippedWeapon().getName());
         assertEquals("Wooden Shield", player.getEquippedShield().getName());
         assertEquals(CellType.FLOOR, restored.getCell(doorData.x, doorData.y).getType());
+        assertEquals(doorCell.getRequiredKey(), restored.getCell(doorData.x, doorData.y).getRequiredKey());
+        assertEquals(doorCell.isExit(), restored.getCell(doorData.x, doorData.y).isExit());
         assertTrue(restored.getCell(enemyData.x, enemyData.y).getActor() instanceof Wasp);
         assertEquals(3, restored.getCell(enemyData.x, enemyData.y).getActor().getHp());
         assertTrue(restored.getActors().stream().anyMatch(actor -> actor instanceof Enemy));
+    }
+
+    @Test
+    void newSaveDataShouldStartAsLegacyUntilSavedOrMigrated() {
+        SaveData data = new SaveData();
+
+        assertEquals(0, data.version);
+        assertEquals(2, SaveData.CURRENT_VERSION);
+    }
+
+    @Test
+    void restoreMapShouldMigrateLegacySaveVersion() {
+        GameMap baseMap = MapLoader.loadMap("map1.txt");
+
+        SaveData data = new SaveData();
+        data.level = 1;
+        data.player = new PlayerData();
+        data.player.x = baseMap.getPlayer().getX();
+        data.player.y = baseMap.getPlayer().getY();
+        data.player.hp = baseMap.getPlayer().getHp();
+
+        SaveManager.restoreMap(data);
+
+        assertEquals(SaveData.CURRENT_VERSION, data.version);
+    }
+
+    @Test
+    void restoreMapShouldApplyDoorKeyAndExitStateFromSaveData() {
+        GameMap baseMap = MapLoader.loadMap("map1.txt");
+        Cell playerCell = baseMap.getPlayer().getCell();
+        Cell doorCell = findDoor(baseMap);
+
+        SaveData data = new SaveData();
+        data.version = SaveData.CURRENT_VERSION;
+        data.level = 1;
+        data.player = new PlayerData();
+        data.player.x = playerCell.getX();
+        data.player.y = playerCell.getY();
+        data.player.hp = baseMap.getPlayer().getHp();
+
+        DoorData doorData = new DoorData();
+        doorData.x = doorCell.getX();
+        doorData.y = doorCell.getY();
+        doorData.open = false;
+        doorData.requiredKey = KeyType.GOLD;
+        doorData.isExit = true;
+        data.doors.add(doorData);
+
+        GameMap restored = SaveManager.restoreMap(data);
+        Cell restoredDoor = restored.getCell(doorData.x, doorData.y);
+
+        assertEquals(CellType.DOOR, restoredDoor.getType());
+        assertEquals(KeyType.GOLD, restoredDoor.getRequiredKey());
+        assertTrue(restoredDoor.isExit());
     }
 
     @Test

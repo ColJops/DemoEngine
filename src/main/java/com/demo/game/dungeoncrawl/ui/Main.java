@@ -3,7 +3,6 @@ package com.demo.game.dungeoncrawl.ui;
 import com.demo.game.dungeoncrawl.dto.SaveData;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
-import com.demo.game.dungeoncrawl.logic.MapLoader;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -35,6 +34,7 @@ public class Main extends Application {
 
     private GameMap map;
     private GameEngine engine;
+    private GameSession session;
     private Canvas canvas;
     private Canvas minimap;
     public static Main instance;
@@ -44,7 +44,6 @@ public class Main extends Application {
     private Label attackLabel;
     private Label defenseLabel;
     private Label killLabel;
-    private int currentLevel = 1;
     private ProgressBar hpBar;
     private VBox inventoryBox;
     private Label weaponLabel;
@@ -61,8 +60,8 @@ public class Main extends Application {
     public void start(Stage stage) {
 
         instance = this;
-        map = MapLoader.loadMap("map1.txt");
-        engine = new GameEngine(map);
+        session = new GameSession();
+        syncFromSession();
 
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
@@ -370,45 +369,14 @@ public class Main extends Application {
 
     public void nextLevel() {
 
-        currentLevel++;
-
-        String nextMap = "map" + currentLevel + ".txt";
-
-        GameMap newMap = MapLoader.loadMap(nextMap);
-
-        // przenosimy gracza
-        Player oldPlayer = map.getPlayer();
-        Player newPlayer = newMap.getPlayer();
-
-        // inventory
-        newPlayer.getInventory().addAll(oldPlayer.getInventory());
-
-        // equipment (poprawnie!)
-        if (oldPlayer.getEquippedWeapon() != null) {
-            newPlayer.equipWeapon(oldPlayer.getEquippedWeapon());
-        }
-
-        if (oldPlayer.getEquippedShield() != null) {
-            newPlayer.equipShield(oldPlayer.getEquippedShield());
-        }
-
-        // staty
-        newPlayer.setKills(oldPlayer.getKills());
-
-        // HP
-        newPlayer.takeDamage(-(oldPlayer.getHp() - newPlayer.getHp()));
-
-        // jeśli masz system statów:
-        newPlayer.recalculateStats();
-
-        this.map = newMap;
-        this.engine = new GameEngine(map);
+        session.nextLevel();
+        syncFromSession();
 
         resizeCanvas();
         refresh();
 
         if (instance != null) {
-            log("Entered level " + currentLevel);
+            log("Entered level " + session.getCurrentLevel());
         }
     }
 
@@ -479,24 +447,23 @@ public class Main extends Application {
 
         // RESTART
         restartBtn.setOnAction(_ -> {
-            currentLevel = 1;
-            map = MapLoader.loadMap("map1.txt");
-            engine = new GameEngine(map);
+            session.restartGame();
+            syncFromSession();
             refresh();
             log("Game restarted");
         });
 
         // RESTART LEVEL
         levelBtn.setOnAction(_ -> {
-            map = MapLoader.loadMap("map" + currentLevel + ".txt");
-            engine = new GameEngine(map);
+            session.restartLevel();
+            syncFromSession();
             refresh();
             log("Level restarted");
         });
 
         // SAVE
         saveBtn.setOnAction(_ -> {
-            SaveManager.save(map, currentLevel);
+            SaveManager.save(map, session.getCurrentLevel());
             log("Game saved");
         });
 
@@ -505,15 +472,12 @@ public class Main extends Application {
 
             SaveData data = SaveManager.load();
 
-            GameMap loadedMap = SaveManager.restoreMap(data);
-            if (loadedMap == null) {
+            if (!session.load(data)) {
                 log("Could not load game");
                 return;
             }
 
-            currentLevel = data.level;
-            this.map = loadedMap;
-            this.engine = new GameEngine(map);
+            syncFromSession();
 
             refresh();
             log("Game loaded");
@@ -547,6 +511,11 @@ public class Main extends Application {
         });
 
         return bar;
+    }
+
+    private void syncFromSession() {
+        this.map = session.getMap();
+        this.engine = session.getEngine();
     }
     private void styleButton(Button btn) {
 

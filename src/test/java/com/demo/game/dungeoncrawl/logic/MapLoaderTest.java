@@ -34,6 +34,20 @@ class MapLoaderTest {
     }
 
     @Test
+    void biomeShouldComeFromMapFile() {
+        GameMap map = MapLoader.loadMap("custom-biome-map.txt");
+
+        assertEquals(BiomeType.FOREST, map.getBiome());
+    }
+
+    @Test
+    void unknownMapCharacterShouldLeaveCellEmpty() {
+        GameMap map = MapLoader.loadMap("invalid-character-map.txt");
+
+        assertEquals(CellType.EMPTY, map.getCell(2, 1).getType());
+    }
+
+    @Test
     void loadedMapShouldWireActorsToTheirCells() {
         GameMap map = MapLoader.loadMap("map1.txt");
 

@@ -61,7 +61,7 @@ public abstract class Actor {
 
 
     public void attack(Actor target) {
-        int damage = Math.max(1, attack - target.getDefense());
+        int damage = Math.max(1, getAttack() - target.getDefense());
         target.takeDamage(damage);
         if (Main.instance != null) {
             Main.log(this.getClass().getSimpleName() + " attacks " +
@@ -84,9 +84,11 @@ public abstract class Actor {
             // pickup item
             if (this instanceof Player player && nextCell.getItem() != null) {
                 Item item = nextCell.getItem();
-                player.pickUp(item);   // 🔥 TU JEST CAŁA LOGIKA
+                boolean pickedUp = player.pickUp(item);   // 🔥 TU JEST CAŁA LOGIKA
                // System.out.println("Trying pickup: " + nextCell.getItem()); //Debug
-                nextCell.setItem(null);
+                if (pickedUp) {
+                    nextCell.setItem(null);
+                }
             }
         }
     }

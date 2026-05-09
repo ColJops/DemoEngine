@@ -38,6 +38,8 @@ public class Main extends Application {
     private Canvas canvas;
     private Canvas minimap;
     public static Main instance;
+    private boolean minimapDirty = true;
+    private GameRenderer gameRenderer;
 
     //HUD
     private Label hpLabel;
@@ -69,6 +71,8 @@ public class Main extends Application {
         int uiHeight = 200; // minimapa + log
         int topBarHeight = 30;
 
+        canvas = new Canvas(canvasWidth, canvasHeight);
+
         Scene scene = new Scene(
                 createContent(stage),
                 canvasWidth + 260,
@@ -79,15 +83,19 @@ public class Main extends Application {
             switch (event.getCode()) {
                 case UP:
                     engine.handlePlayerMove(0, -1);
+                    minimapDirty = true;
                     break;
                 case DOWN:
                     engine.handlePlayerMove(0, 1);
+                    minimapDirty = true;
                     break;
                 case LEFT:
                     engine.handlePlayerMove(-1, 0);
+                    minimapDirty = true;
                     break;
                 case RIGHT:
                     engine.handlePlayerMove(1, 0);
+                    minimapDirty = true;
                     break;
                 //Używanie przedmiotów w inventory
                 case DIGIT1: useItem(0); break;
@@ -105,6 +113,7 @@ public class Main extends Application {
                     SaveData data = SaveManager.load(0);
                     if (data != null && session.load(data)) {
                         syncFromSession();
+                        minimapDirty = true;
                         refresh();
                         log("Quick loaded");
                     }
@@ -133,10 +142,7 @@ public class Main extends Application {
 
     private Parent createContent(Stage stage) {
 
-        int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
-        int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
-
-        canvas = new Canvas(canvasWidth, canvasHeight);
+        gameRenderer = new GameRenderer(canvas, VIEW_WIDTH, VIEW_HEIGHT);
         minimap = new Canvas(150, 150);
 
         BorderPane root = new BorderPane();
@@ -242,55 +248,53 @@ public class Main extends Application {
         return hud;
     }
 
+    //Nowa wersja refresh
     private void refresh() {
-
         Player player = map.getPlayer();
 
+        updateCamera(player);
+        renderMap();
+        refreshUI();
+    }
+
+    private void updateCamera(Player player) {
         double targetX = player.getX() - VIEW_WIDTH / 2.0;
         double targetY = player.getY() - VIEW_HEIGHT / 2.0;
+
         cameraX += (targetX - cameraX) * 0.1;
         cameraY += (targetY - cameraY) * 0.1;
 
-
-        // clamp (żeby nie wyjść poza mapę)
         double maxX = Math.max(0, map.getWidth() - VIEW_WIDTH);
         double maxY = Math.max(0, map.getHeight() - VIEW_HEIGHT);
 
-        cameraX = Math.max(0, Math.min(cameraX, maxX));
-        cameraY = Math.max(0, Math.min(cameraY, maxY));
+        cameraX = Math.clamp(cameraX, 0, maxX);
+        cameraY = Math.clamp(cameraY, 0, maxY);
+    }
 
-        GraphicsContext context = canvas.getGraphicsContext2D();
+    private void renderMap() {
+        gameRenderer.render(map, cameraX, cameraY);
+        canvas.requestFocus();
+    }
 
-        context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+    private void renderCell(GraphicsContext context, Cell cell, int screenX, int screenY) {
+        Tiles.drawTile(context, cell, screenX, screenY, map);
 
-        // 🔥 RENDER TYLKO VIEWPORTU
-        for (int y = 0; y < VIEW_HEIGHT; y++) {
-            for (int x = 0; x < VIEW_WIDTH; x++) {
-
-                int mapX = x + (int) cameraX;
-                int mapY = y + (int) cameraY;
-
-                Cell cell = map.getCell(mapX, mapY);
-                if (cell == null) continue;
-
-                // tło
-                Tiles.drawTile(context, cell, x, y, map);
-
-                // item
-                if (cell.getItem() != null) {
-                    Tiles.drawTile(context, cell.getItem(), x, y, map);
-                }
-
-                // actor
-                if (cell.getActor() instanceof Drawable) {
-                    Tiles.drawTile(context, (Drawable) cell.getActor(), x, y, map);
-                }
-            }
+        if (cell.getItem() != null) {
+            Tiles.drawTile(context, cell.getItem(), screenX, screenY, map);
         }
 
-        canvas.requestFocus();
+        if (cell.getActor() instanceof Drawable drawable) {
+            Tiles.drawTile(context, drawable, screenX, screenY, map);
+        }
+    }
+
+    private void refreshUI() {
         updateHUD();
-        drawMinimap();
+
+        if (minimapDirty) {
+            drawMinimap();
+            minimapDirty = false;
+        }
     }
 
     public void addLog(String text) {
@@ -385,6 +389,7 @@ public class Main extends Application {
 
         session.nextLevel();
         syncFromSession();
+        minimapDirty = true;
 
         resizeCanvas();
         refresh();
@@ -463,6 +468,7 @@ public class Main extends Application {
         restartBtn.setOnAction(_ -> {
             session.restartGame();
             syncFromSession();
+            minimapDirty = true;
             refresh();
             log("Game restarted");
         });
@@ -471,6 +477,7 @@ public class Main extends Application {
         levelBtn.setOnAction(_ -> {
             session.restartLevel();
             syncFromSession();
+            minimapDirty = true;
             refresh();
             log("Level restarted");
         });
@@ -621,6 +628,7 @@ public class Main extends Application {
                 }
 
                 syncFromSession();
+                minimapDirty = true;
                 refresh();
                 log("Loaded slot " + slot);
                 dialog.close();

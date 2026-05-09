@@ -1,6 +1,8 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
+import com.demo.game.dungeoncrawl.model.item.Key;
+import com.demo.game.dungeoncrawl.model.item.KeyType;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -40,6 +42,23 @@ class ActorTest {
 
         assertEquals(1, player.getCell().getX());
         assertEquals(2, player.getCell().getY());
+    }
+
+    @Test
+    void playerShouldNotRemoveItemFromMapWhenInventoryIsFull() {
+
+        GameMap map = new GameMap(3, 3, CellType.FLOOR);
+        Player player = new Player(map.getCell(1, 1));
+        for (int i = 0; i < 10; i++) {
+            player.pickUp(new Key(KeyType.BLUE));
+        }
+        Key mapKey = new Key(KeyType.RED);
+        map.getCell(1, 2).setItem(mapKey);
+
+        player.move(0, 1);
+
+        assertSame(mapKey, map.getCell(1, 2).getItem());
+        assertFalse(player.getInventory().contains(mapKey));
     }
 
     @Test

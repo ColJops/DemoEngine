@@ -18,10 +18,23 @@ class PlayerInventoryTest {
         Player player = createPlayer();
         Key key = new Key(KeyType.BLUE);
 
-        player.pickUp(key);
+        assertTrue(player.pickUp(key));
 
         assertTrue(player.hasKey(KeyType.BLUE));
         assertTrue(player.getInventory().contains(key));
+    }
+
+    @Test
+    void pickupShouldFailWhenInventoryIsFull() {
+        Player player = createPlayer();
+        for (int i = 0; i < 10; i++) {
+            assertTrue(player.pickUp(new Key(KeyType.BLUE)));
+        }
+
+        Key extraKey = new Key(KeyType.RED);
+
+        assertFalse(player.pickUp(extraKey));
+        assertFalse(player.getInventory().contains(extraKey));
     }
 
     @Test

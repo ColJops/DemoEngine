@@ -104,7 +104,7 @@ public class Player extends Actor implements Drawable {
         return value;
     }
 
-    public void pickUp(Item item) {
+    public boolean pickUp(Item item) {
 
         if (item instanceof Weapon weapon) {
 
@@ -115,6 +115,7 @@ public class Player extends Actor implements Drawable {
                 baseAttack += weapon.getAttackBonus();
                 Main.log("Picked up " + weapon.getName() + " (+" + weapon.getAttackBonus() + " ATK stacked)");
             }
+            return true;
 
         } else if (item instanceof Shield shield) {
 
@@ -125,22 +126,25 @@ public class Player extends Actor implements Drawable {
                 baseDefense += shield.getDefenseBonus();
                 Main.log("Picked up " + shield.getName() + " (+" + shield.getDefenseBonus() + " DEF stacked)");
             }
+            return true;
 
         } else {
-            // 🔥 tylko tutaj dodajemy do inventory
-            inventory.add(item);
+            //  tylko tutaj dodajemy do inventory
 
             int INVENTORY_SIZE = 10;
             if (inventory.size() >= INVENTORY_SIZE) {
                 Main.log("Inventory full!");
-                return;
+                return false;
             }
+
+            inventory.add(item);
 
             if (item instanceof Key key) {
                 Main.log("Picked up " + key.getKeyType() + " key");
             } else {
                 Main.log("Picked up " + item.getName());
             }
+            return true;
         }
     }
 

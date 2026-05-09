@@ -116,7 +116,7 @@ public class SaveManager {
 
         try {
             String json = Files.readString(path);
-            return GSON.fromJson(json, SaveData.class);
+            return SaveMigrator.migrate(GSON.fromJson(json, SaveData.class));
         } catch (Exception e) {
             System.out.println("Error reading save: " + path);
             e.printStackTrace();

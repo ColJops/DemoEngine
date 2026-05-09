@@ -6,6 +6,7 @@ import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import com.demo.game.dungeoncrawl.ui.Main;
+import com.demo.game.dungeoncrawl.combat.CombatSystem;
 
 public class GameEngine {
 
@@ -26,19 +27,9 @@ public class GameEngine {
         Actor enemy = nextCell.getActor();
         if (enemy != null) {
 
-            player.attack(enemy);
-
-            if (!enemy.isAlive()) {
-                enemy.getCell().setActor(null);
-                map.removeActor(enemy);
-                Main.log("You killed a " + enemy.getClass().getSimpleName() + "!");
-
-                if (enemy instanceof Enemy) {
-                    player.addKill();
-                }
-            }
-
+            CombatSystem.attack(player, enemy, map);
             return;
+
         }
 
         // 2. DRZWI

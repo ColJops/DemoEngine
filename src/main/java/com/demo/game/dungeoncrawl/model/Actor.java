@@ -60,13 +60,10 @@ public abstract class Actor {
     }
 
 
+    @Deprecated
     public void attack(Actor target) {
         int damage = Math.max(1, getAttack() - target.getDefense());
         target.takeDamage(damage);
-        if (Main.instance != null) {
-            Main.log(this.getClass().getSimpleName() + " attacks " +
-                    target.getClass().getSimpleName() + " for " + damage + " damage.");
-        }
     }
 
     public void move(int dx, int dy) {

@@ -1,5 +1,6 @@
 package com.demo.game.dungeoncrawl.logic;
 
+import com.demo.game.dungeoncrawl.combat.CombatSystem;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -72,7 +73,7 @@ public class ChaseAI implements EnemyAI {
         if (target instanceof Player) {
 
             if (now - lastAttack >= ATTACK_COOLDOWN) {
-                enemy.attack(target);
+                CombatSystem.attack(enemy, target, map);
                 lastAttack = now;
             }
 

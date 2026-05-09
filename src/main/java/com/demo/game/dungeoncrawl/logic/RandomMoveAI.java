@@ -1,5 +1,6 @@
 package com.demo.game.dungeoncrawl.logic;
 
+import com.demo.game.dungeoncrawl.combat.CombatSystem;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
@@ -28,7 +29,7 @@ public class RandomMoveAI implements EnemyAI {
         Actor target = next.getActor();
 
         if (target instanceof Player) {
-            enemy.attack(target);
+            CombatSystem.attack(enemy, target, map);
         } else {
             enemy.move(d[0], d[1]);
         }

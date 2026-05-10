@@ -1,5 +1,4 @@
 target/
-save.json
 save_slot_*.json
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

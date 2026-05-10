@@ -40,6 +40,8 @@ public class Main extends Application {
     public static Main instance;
     private boolean minimapDirty = true;
     private GameRenderer gameRenderer;
+    private boolean paused = false;
+    private Label helpLabel;
 
     //HUD
     private Label hpLabel;
@@ -80,6 +82,10 @@ public class Main extends Application {
         );
 
         scene.setOnKeyPressed(event -> {
+            if (paused && event.getCode() != javafx.scene.input.KeyCode.P
+                    && event.getCode() != javafx.scene.input.KeyCode.Q) {
+                return;
+            }
             switch (event.getCode()) {
                 case UP:
                     engine.handlePlayerMove(0, -1);
@@ -96,6 +102,15 @@ public class Main extends Application {
                 case RIGHT:
                     engine.handlePlayerMove(1, 0);
                     minimapDirty = true;
+                    break;
+                case P:
+                    paused = !paused;
+                    log(paused ? "Game paused" : "Game resumed");
+                    updateHelpText();
+                    break;
+
+                case Q:
+                    pauseAndConfirmQuit(stage);
                     break;
                 //Używanie przedmiotów w inventory
                 case DIGIT1: useItem(0); break;
@@ -132,7 +147,10 @@ public class Main extends Application {
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                engine.update(now);
+                if (!paused) {
+                    engine.update(now);
+                }
+
                 refresh();
             }
         };
@@ -153,7 +171,17 @@ public class Main extends Application {
         root.setRight(ui);
 
         // 👉 dół (minimapa + log)
-        HBox bottomBar = new HBox(10, minimap, logArea);
+        helpLabel = new Label();
+        helpLabel.setStyle("""
+            -fx-text-fill: #cccccc;
+            -fx-font-size: 12px;
+            """);
+        updateHelpText();
+
+        VBox helpBox = new VBox(helpLabel);
+        helpBox.setStyle("-fx-background-color: #111; -fx-padding: 10;");
+
+        HBox bottomBar = new HBox(10, minimap, logArea, helpBox);
         VBox centerBox = new VBox(canvas);
         root.setCenter(centerBox);
         bottomBar.setStyle("-fx-background-color: #111; -fx-padding: 10;");
@@ -166,6 +194,22 @@ public class Main extends Application {
         refresh();
 
         return root;
+    }
+
+    private void updateHelpText() {
+        if (helpLabel == null) return;
+
+        helpLabel.setText("""
+            Controls:
+            Arrows - move
+            1-5 - use item
+            F5 - quick save
+            F9 - quick load
+            P - pause
+            Q - quit
+            
+            Status: %s
+            """.formatted(paused ? "PAUSED" : "RUNNING"));
     }
 
     private VBox createUI() {
@@ -274,18 +318,6 @@ public class Main extends Application {
     private void renderMap() {
         gameRenderer.render(map, cameraX, cameraY);
         canvas.requestFocus();
-    }
-
-    private void renderCell(GraphicsContext context, Cell cell, int screenX, int screenY) {
-        Tiles.drawTile(context, cell, screenX, screenY, map);
-
-        if (cell.getItem() != null) {
-            Tiles.drawTile(context, cell.getItem(), screenX, screenY, map);
-        }
-
-        if (cell.getActor() instanceof Drawable drawable) {
-            Tiles.drawTile(context, drawable, screenX, screenY, map);
-        }
     }
 
     private void refreshUI() {
@@ -645,6 +677,42 @@ public class Main extends Application {
         }
 
         Scene scene = new Scene(layout, 350, 250);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    private void pauseAndConfirmQuit(Stage owner) {
+        paused = true;
+        updateHelpText();
+
+        Stage dialog = new Stage();
+        dialog.initOwner(owner);
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.setTitle("Quit Game");
+
+        Label text = new Label("Quit game?");
+        text.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+        Button yesBtn = new Button("Yes");
+        Button noBtn = new Button("No");
+
+        styleButton(yesBtn);
+        styleButton(noBtn);
+
+        yesBtn.setOnAction(_ -> owner.close());
+
+        noBtn.setOnAction(_ -> {
+            dialog.close();
+            paused = false;
+            updateHelpText();
+            log("Game resumed");
+        });
+
+        HBox buttons = new HBox(10, yesBtn, noBtn);
+        VBox layout = new VBox(15, text, buttons);
+        layout.setStyle("-fx-background-color: #222; -fx-padding: 20;");
+
+        Scene scene = new Scene(layout, 220, 120);
         dialog.setScene(scene);
         dialog.showAndWait();
     }

@@ -35,11 +35,21 @@ public class GameSession {
         return true;
     }
 
-    public void nextLevel() {
-        currentLevel++;
-        GameMap newMap = MapLoader.loadMap("map" + currentLevel + ".txt");
+    public boolean nextLevel() {
+        int nextLevel = currentLevel + 1;
+
+        GameMap newMap = MapLoader.loadMap("map" + nextLevel + ".txt");
+
+        if (newMap == null) {
+            Main.log("No next level found.");
+            return false;
+        }
+
         carryPlayerState(map.getPlayer(), newMap.getPlayer());
+        currentLevel = nextLevel;
         setMap(newMap);
+
+        return true;
     }
 
     public int getCurrentLevel() {
@@ -54,8 +64,16 @@ public class GameSession {
         return engine;
     }
 
-    private void loadCurrentLevel() {
-        setMap(MapLoader.loadMap("map" + currentLevel + ".txt"));
+    private boolean loadCurrentLevel() {
+        GameMap loadedMap = MapLoader.loadMap("map" + currentLevel + ".txt");
+
+        if (loadedMap == null) {
+            Main.log("Could not load map" + currentLevel + ".txt");
+            return false;
+        }
+
+        setMap(loadedMap);
+        return true;
     }
 
     private void setMap(GameMap map) {
@@ -76,6 +94,8 @@ public class GameSession {
 
         newPlayer.setKills(oldPlayer.getKills());
         newPlayer.setHp(oldPlayer.getHp());
+        newPlayer.setBaseAttack(oldPlayer.getBaseAttack());
+        newPlayer.setBaseDefense(oldPlayer.getBaseDefense());
         newPlayer.recalculateStats();
     }
 }

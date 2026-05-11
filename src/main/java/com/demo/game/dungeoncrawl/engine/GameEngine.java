@@ -73,12 +73,10 @@ public class GameEngine {
 
     public void update(long now) {
 
-        for (Actor actor : map.getActors()) {
-
-            if (actor instanceof Enemy enemy) {
+        for (Actor actor : new java.util.ArrayList<>(map.getActors())) {
+            if (actor instanceof Enemy enemy && enemy.isAlive()) {
                 enemy.update(now, map);
             }
-
         }
     }
 }

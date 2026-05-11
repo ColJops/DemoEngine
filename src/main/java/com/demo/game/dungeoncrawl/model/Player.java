@@ -104,6 +104,22 @@ public class Player extends Actor implements Drawable {
         return value;
     }
 
+    public int getBaseAttack() {
+        return baseAttack;
+    }
+
+    public void setBaseAttack(int baseAttack) {
+        this.baseAttack = baseAttack;
+    }
+
+    public int getBaseDefense() {
+        return baseDefense;
+    }
+
+    public void setBaseDefense(int baseDefense) {
+        this.baseDefense = baseDefense;
+    }
+
     public boolean pickUp(Item item) {
 
         if (item instanceof Weapon weapon) {

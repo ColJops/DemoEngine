@@ -33,6 +33,7 @@ final class SaveMigrator {
             migrateV1ToV2(data);
         }
 
+        ensurePlayerDefaults(data);
         data.version = SaveData.CURRENT_VERSION;
         return data;
     }
@@ -59,6 +60,20 @@ final class SaveMigrator {
 
         if (data.items == null) {
             data.items = new ArrayList<ItemData>();
+        }
+    }
+
+    private static void ensurePlayerDefaults(SaveData data) {
+        if (data.player == null) {
+            return;
+        }
+
+        if (data.player.baseAttack <= 0) {
+            data.player.baseAttack = 2;
+        }
+
+        if (data.player.baseDefense <= 0) {
+            data.player.baseDefense = 1;
         }
     }
 }

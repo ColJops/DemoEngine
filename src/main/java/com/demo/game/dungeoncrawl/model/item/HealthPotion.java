@@ -12,10 +12,18 @@ public class HealthPotion extends Item {
 
     @Override
     public void use(Player player) {
-        player.takeDamage(-5);
+        int before = player.getHp();
+
+        player.heal(5);
+
+        int healed = player.getHp() - before;
 
         if (Main.instance != null) {
-            Main.log("Used Health Potion (+5 HP)");
+            if (healed > 0) {
+                Main.log("Used Health Potion (+" + healed + " HP)");
+            } else {
+                Main.log("Used Health Potion (HP already full)");
+            }
         }
     }
 }

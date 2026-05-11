@@ -1,49 +1,50 @@
 package com.demo.game.dungeoncrawl.ui;
 
 import com.demo.game.dungeoncrawl.dto.SaveData;
-import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.item.HealthPotion;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
+import com.demo.game.dungeoncrawl.engine.GameEngine;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Button;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.Priority;
-import com.demo.game.dungeoncrawl.engine.GameEngine;
 import javafx.stage.StageStyle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 
 import static com.demo.game.dungeoncrawl.model.map.CellType.WALL;
 import static javafx.application.Application.launch;
 
 public class Main extends Application {
 
+    private Stage primaryStage;
+    private AnimationTimer gameLoop;
+    private boolean gameOver = false;
+
     private GameMap map;
     private GameEngine engine;
     private GameSession session;
+
     private Canvas canvas;
     private Canvas minimap;
-    public static Main instance;
-    private boolean minimapDirty = true;
     private GameRenderer gameRenderer;
+
+    public static Main instance;
+
+    private boolean minimapDirty = true;
     private boolean paused = false;
     private Label helpLabel;
 
-    //HUD
     private Label hpLabel;
     private Label attackLabel;
     private Label defenseLabel;
@@ -54,7 +55,6 @@ public class Main extends Application {
     private Label shieldLabel;
     private TextArea logArea;
 
-    //Viewport
     private final int VIEW_WIDTH = 20;
     private final int VIEW_HEIGHT = 15;
     private double cameraX = 0;
@@ -62,63 +62,319 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
-
+        this.primaryStage = stage;
         instance = this;
+
+        primaryStage.initStyle(StageStyle.UNDECORATED);
+        primaryStage.setResizable(false);
+
+        showTitleScreen();
+    }
+
+    private void showTitleScreen() {
+        stopGameLoop();
+
+        Image bgImage = new Image(getClass().getResource("/images/title_background.png").toExternalForm());
+
+        ImageView background = new ImageView(bgImage);
+        background.setFitWidth(900);
+        background.setFitHeight(700);
+        background.setPreserveRatio(false);
+
+        Label title = new Label("DUNGEON CRAWL");
+        title.setStyle("""
+            -fx-text-fill: #f5d27a;
+            -fx-font-size: 44px;
+            -fx-font-weight: bold;
+            -fx-effect: dropshadow(gaussian, black, 8, 0.8, 3, 3);
+            """);
+
+        Button newGameBtn = createMenuButton("NEW GAME");
+        Button loadBtn = createMenuButton("LOAD GAME");
+        Button optionsBtn = createMenuButton("OPTIONS");
+        Button quitBtn = createMenuButton("QUIT");
+
+        newGameBtn.setOnAction(_ -> showGameScreen());
+
+        loadBtn.setOnAction(_ -> {
+            showGameScreen();
+            showLoadDialog();
+        });
+
+        optionsBtn.setOnAction(_ -> showOptionsScreen());
+        quitBtn.setOnAction(_ -> primaryStage.close());
+
+        VBox menu = new VBox(15, title, newGameBtn, loadBtn, optionsBtn, quitBtn);
+        menu.setAlignment(javafx.geometry.Pos.CENTER);
+        menu.setTranslateY(40);
+
+        StackPane root = new StackPane(background, menu);
+
+        Scene scene = new Scene(root, 900, 700);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private Button createMenuButton(String text) {
+        Button btn = new Button(text);
+
+        String normal = """
+            -fx-background-color: rgba(20,20,20,0.85);
+            -fx-text-fill: #f5d27a;
+            -fx-font-size: 18px;
+            -fx-font-weight: bold;
+            -fx-border-color: #8a6a2a;
+            -fx-border-width: 2;
+            -fx-padding: 10 35 10 35;
+            """;
+
+        String hover = """
+            -fx-background-color: rgba(80,40,20,0.95);
+            -fx-text-fill: white;
+            -fx-font-size: 18px;
+            -fx-font-weight: bold;
+            -fx-border-color: #f5d27a;
+            -fx-border-width: 2;
+            -fx-padding: 10 35 10 35;
+            """;
+
+        btn.setMinWidth(240);
+        btn.setStyle(normal);
+
+        btn.setOnMouseEntered(_ -> btn.setStyle(hover));
+        btn.setOnMouseExited(_ -> btn.setStyle(normal));
+
+        return btn;
+    }
+
+    private void showOptionsScreen() {
+        Label title = new Label("OPTIONS");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 28px;");
+
+        Button backBtn = new Button("Back");
+        styleButton(backBtn);
+
+        backBtn.setOnAction(_ -> showTitleScreen());
+
+        VBox layout = new VBox(20, title, backBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setStyle("-fx-background-color: #111; -fx-padding: 60;");
+
+        Scene scene = new Scene(layout, 900, 700);
+        primaryStage.setScene(scene);
+    }
+
+    private void showGameScreen() {
+        stopGameLoop();
+
+        paused = false;
+        minimapDirty = true;
+        cameraX = 0;
+        cameraY = 0;
+
         session = new GameSession();
         syncFromSession();
 
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
 
-        int uiHeight = 200; // minimapa + log
-        int topBarHeight = 30;
-
-        canvas = new Canvas(canvasWidth, canvasHeight);
-
         Scene scene = new Scene(
-                createContent(stage),
+                createContent(primaryStage),
                 canvasWidth + 260,
-                canvasHeight + uiHeight + topBarHeight
+                canvasHeight + 230
         );
 
+        setupInput(scene);
+
+        primaryStage.setScene(scene);
+        primaryStage.show();
+        scene.getRoot().requestFocus();
+
+        gameLoop = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if (!paused && !gameOver) {
+                    engine.update(now);
+                }
+
+                refresh();
+            }
+        };
+
+        gameLoop.start();
+    }
+
+    private void stopGameLoop() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+            gameLoop = null;
+        }
+    }
+
+    private Parent createContent(Stage stage) {
+        int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
+        int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
+
+        canvas = new Canvas(canvasWidth, canvasHeight);
+        minimap = new Canvas(150, 150);
+        gameRenderer = new GameRenderer(canvas, VIEW_WIDTH, VIEW_HEIGHT);
+
+        BorderPane root = new BorderPane();
+
+        VBox ui = createUI();
+        ui.setPrefWidth(260);
+        root.setRight(ui);
+
+        helpLabel = new Label();
+        helpLabel.setStyle("""
+                -fx-text-fill: #cccccc;
+                -fx-font-size: 12px;
+                """);
+        updateHelpText();
+
+        VBox helpBox = new VBox(helpLabel);
+        helpBox.setStyle("-fx-background-color: #111; -fx-padding: 10;");
+
+        HBox bottomBar = new HBox(10, minimap, logArea, helpBox);
+        bottomBar.setStyle("-fx-background-color: #111; -fx-padding: 10;");
+        bottomBar.setPrefHeight(160);
+
+        VBox centerBox = new VBox(canvas);
+
+        root.setCenter(centerBox);
+        root.setRight(ui);
+        root.setBottom(bottomBar);
+        root.setTop(createTopBar(stage));
+        root.setStyle("-fx-background-color: black;");
+
+        refresh();
+
+        return root;
+    }
+
+    private VBox createUI() {
+        VBox hud = new VBox(15);
+        hud.setPrefWidth(260);
+        hud.setMinWidth(260);
+        hud.setMaxWidth(260);
+        hud.setStyle("""
+                -fx-background-color: #1e1e1e;
+                -fx-padding: 15;
+                -fx-border-color: #444;
+                -fx-border-width: 0 0 0 2;
+                """);
+
+        Label title = new Label("PLAYER");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        hpBar = new ProgressBar(1);
+        hpBar.setPrefWidth(200);
+        hpBar.setPrefHeight(18);
+        hpBar.setStyle("-fx-accent: red;");
+
+        hpLabel = new Label();
+        attackLabel = new Label();
+        defenseLabel = new Label();
+        killLabel = new Label();
+
+        VBox statsBox = new VBox(5, hpBar, hpLabel, attackLabel, defenseLabel, killLabel);
+
+        Label equipmentTitle = new Label("EQUIPMENT");
+        equipmentTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+        weaponLabel = new Label();
+        shieldLabel = new Label();
+
+        VBox equipmentBox = new VBox(5, weaponLabel, shieldLabel);
+
+        Label inventoryTitle = new Label("INVENTORY");
+        inventoryTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
+
+        inventoryBox = new VBox(5);
+        inventoryBox.setStyle("-fx-background-color: #1e1e1e;");
+
+        ScrollPane inventoryScroll = new ScrollPane(inventoryBox);
+        inventoryScroll.setPrefHeight(150);
+        inventoryScroll.setFitToWidth(true);
+        inventoryScroll.setStyle("""
+                -fx-background: #1e1e1e;
+                -fx-background-color: #1e1e1e;
+                """);
+
+        logArea = new TextArea();
+        logArea.setEditable(false);
+        logArea.setPrefHeight(140);
+        logArea.setStyle("""
+                -fx-control-inner-background: #1e1e1e;
+                -fx-text-fill: #cccccc;
+                """);
+
+        hud.getChildren().addAll(
+                title,
+                statsBox,
+                equipmentTitle,
+                equipmentBox,
+                inventoryTitle,
+                inventoryScroll
+        );
+
+        return hud;
+    }
+
+    private void setupInput(Scene scene) {
         scene.setOnKeyPressed(event -> {
-            if (paused && event.getCode() != javafx.scene.input.KeyCode.P
+
+            if (gameOver) {
+                return;
+            }
+
+            if (paused
+                    && event.getCode() != javafx.scene.input.KeyCode.P
                     && event.getCode() != javafx.scene.input.KeyCode.Q) {
                 return;
             }
+
             switch (event.getCode()) {
                 case UP:
                     engine.handlePlayerMove(0, -1);
                     minimapDirty = true;
                     break;
+
                 case DOWN:
                     engine.handlePlayerMove(0, 1);
                     minimapDirty = true;
                     break;
+
                 case LEFT:
                     engine.handlePlayerMove(-1, 0);
                     minimapDirty = true;
                     break;
+
                 case RIGHT:
                     engine.handlePlayerMove(1, 0);
                     minimapDirty = true;
                     break;
-                case P:
-                    paused = !paused;
-                    log(paused ? "Game paused" : "Game resumed");
-                    updateHelpText();
+
+                case DIGIT1:
+                    useItem(0);
                     break;
 
-                case Q:
-                    pauseAndConfirmQuit(stage);
+                case DIGIT2:
+                    useItem(1);
                     break;
-                //Używanie przedmiotów w inventory
-                case DIGIT1: useItem(0); break;
-                case DIGIT2: useItem(1); break;
-                case DIGIT3: useItem(2); break;
-                case DIGIT4: useItem(3); break;
-                case DIGIT5: useItem(4); break;
-                //Quick save/load
+
+                case DIGIT3:
+                    useItem(2);
+                    break;
+
+                case DIGIT4:
+                    useItem(3);
+                    break;
+
+                case DIGIT5:
+                    useItem(4);
+                    break;
+
                 case F5:
                     SaveManager.save(map, session.getCurrentLevel(), 0);
                     log("Quick saved");
@@ -133,167 +389,25 @@ public class Main extends Application {
                         log("Quick loaded");
                     }
                     break;
+
+                case P:
+                    paused = !paused;
+                    log(paused ? "Game paused" : "Game resumed");
+                    updateHelpText();
+                    break;
+
+                case Q:
+                    pauseAndConfirmQuit(primaryStage);
+                    break;
             }
+
             refresh();
         });
-
-        stage.setScene(scene);
-        stage.initStyle(StageStyle.UNDECORATED);
-        stage.setResizable(false);
-        stage.sizeToScene();
-        stage.show();
-        scene.getRoot().requestFocus();
-
-        AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                if (!paused) {
-                    engine.update(now);
-                }
-
-                refresh();
-            }
-        };
-
-        timer.start();
     }
 
-    private Parent createContent(Stage stage) {
-
-        gameRenderer = new GameRenderer(canvas, VIEW_WIDTH, VIEW_HEIGHT);
-        minimap = new Canvas(150, 150);
-
-        BorderPane root = new BorderPane();
-
-        // 👉 prawa strona (HUD)
-        VBox ui = createUI();
-        ui.setPrefWidth(260);
-        root.setRight(ui);
-
-        // 👉 dół (minimapa + log)
-        helpLabel = new Label();
-        helpLabel.setStyle("""
-            -fx-text-fill: #cccccc;
-            -fx-font-size: 12px;
-            """);
-        updateHelpText();
-
-        VBox helpBox = new VBox(helpLabel);
-        helpBox.setStyle("-fx-background-color: #111; -fx-padding: 10;");
-
-        HBox bottomBar = new HBox(10, minimap, logArea, helpBox);
-        VBox centerBox = new VBox(canvas);
-        root.setCenter(centerBox);
-        bottomBar.setStyle("-fx-background-color: #111; -fx-padding: 10;");
-        bottomBar.setPrefHeight(160);
-
-        root.setBottom(bottomBar);
-        root.setTop(createTopBar(stage));
-        root.setStyle("-fx-background-color: black;");
-
-        refresh();
-
-        return root;
-    }
-
-    private void updateHelpText() {
-        if (helpLabel == null) return;
-
-        helpLabel.setText("""
-            Controls:
-            Arrows - move
-            1-5 - use item
-            F5 - quick save
-            F9 - quick load
-            P - pause
-            Q - quit
-            
-            Status: %s
-            """.formatted(paused ? "PAUSED" : "RUNNING"));
-    }
-
-    private VBox createUI() {
-
-        VBox hud = new VBox(15);
-        hud.setPrefWidth(260);
-        hud.setStyle("""
-        -fx-background-color: #1e1e1e;
-        -fx-padding: 15;
-        -fx-border-color: #444;
-        -fx-border-width: 0 0 0 2;
-    """);
-
-        Label title = new Label("PLAYER");
-        title.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
-
-        hpBar = new ProgressBar(1);
-        hpBar.setPrefWidth(200);
-        hpBar.setPrefHeight(18);
-        hpBar.setStyle("-fx-accent: red;");
-        hud.setMinWidth(260);
-        hud.setMaxWidth(260);
-
-        hpLabel = new Label();
-        attackLabel = new Label();
-        defenseLabel = new Label();
-        killLabel = new Label();
-
-        VBox statsBox = new VBox(5, hpBar, hpLabel, attackLabel, defenseLabel, killLabel);
-        statsBox.setFillWidth(true);
-        VBox.setVgrow(hpBar, javafx.scene.layout.Priority.NEVER);
-        Label equipmentTitle = new Label("EQUIPMENT");
-        equipmentTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
-
-        weaponLabel = new Label();
-        shieldLabel = new Label();
-
-        VBox equipmentBox = new VBox(5, weaponLabel, shieldLabel);
-        weaponLabel.setStyle("-fx-text-fill: #ff9933;");
-        shieldLabel.setStyle("-fx-text-fill: #66ccff;");
-        Label inventoryTitle = new Label("INVENTORY");
-        inventoryTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16;");
-
-        inventoryBox = new VBox(5);
-        ScrollPane inventoryScroll = new ScrollPane(inventoryBox);
-        inventoryScroll.setStyle("""
-             -fx-background: #1e1e1e;
-             -fx-background-color: #1e1e1e;
-            """);
-
-        //inventoryScroll.lookup(".viewport").setStyle("-fx-background-color: #1e1e1e;");
-
-        inventoryBox.setStyle("-fx-background-color: #1e1e1e;");
-        inventoryScroll.setPrefHeight(150);
-        inventoryScroll.setFitToWidth(true);
-
-        logArea = new TextArea();
-        logArea.setEditable(false);
-        logArea.setPrefHeight(140);
-        logArea.setStyle("""
-                -fx-control-inner-background: #1e1e1e;
-                -fx-text-fill: #cccccc;
-            """);
-
-        hud.getChildren().addAll(
-                title,
-                statsBox,
-                equipmentTitle,
-                equipmentBox,
-                inventoryTitle,
-                inventoryScroll
-        );
-
-        for (var node : hud.getChildren()) {
-            if (node instanceof Label l) {
-                l.setStyle("-fx-text-fill: white;");
-            }
-        }
-
-        return hud;
-    }
-
-    //Nowa wersja refresh
     private void refresh() {
+        if (map == null || canvas == null || gameRenderer == null) return;
+
         Player player = map.getPlayer();
 
         updateCamera(player);
@@ -329,28 +443,16 @@ public class Main extends Application {
         }
     }
 
-    public void addLog(String text) {
-        logArea.appendText(text + "\n");
-        logArea.setScrollTop(Double.MAX_VALUE);
-    }
-
-    public static void log(String text) {
-        if (instance != null) {
-            instance.addLog(text);
-        }
-    }
-
     private void updateHUD() {
-
         Player player = map.getPlayer();
 
         int hp = player.getHp();
-        int maxHp = 20;
+        int maxHp = player.getMaxHp();
 
-        hpBar.setProgress((double) hp / maxHp);
+        double hpProgress = maxHp > 0 ? (double) hp / maxHp : 0;
+        hpBar.setProgress(Math.max(0, Math.min(1, hpProgress)));
 
-        hpLabel.setText("HP: " + hp);
-        //hpLabel.setStyle("-fx-text-fill: #ff4d4d;");
+        hpLabel.setText("HP: " + hp + "/" + maxHp);
         if (hp > 10) {
             hpLabel.setStyle("-fx-text-fill: #66ff66;");
         } else if (hp > 5) {
@@ -368,18 +470,19 @@ public class Main extends Application {
         killLabel.setText("KILLS: " + player.getKills());
         killLabel.setStyle("-fx-text-fill: #cc99ff;");
 
-        // EQUIPMENT
         if (player.getEquippedWeapon() != null) {
             weaponLabel.setText("Weapon: " + player.getEquippedWeapon().getName());
         } else {
             weaponLabel.setText("Weapon: none");
         }
+        weaponLabel.setStyle("-fx-text-fill: #ff9933;");
 
         if (player.getEquippedShield() != null) {
             shieldLabel.setText("Shield: " + player.getEquippedShield().getName());
         } else {
             shieldLabel.setText("Shield: none");
         }
+        shieldLabel.setStyle("-fx-text-fill: #66ccff;");
 
         inventoryBox.getChildren().clear();
 
@@ -390,26 +493,24 @@ public class Main extends Application {
             if (player.isEquipped(item)) {
                 itemLabel.setStyle("-fx-text-fill: #66ff66; -fx-font-weight: bold;");
                 itemLabel.setText(index + ". " + item.getName() + " (E)");
-
             } else {
                 itemLabel.setStyle("-fx-text-fill: gold;");
             }
+
             inventoryBox.getChildren().add(itemLabel);
             index++;
         }
     }
 
     private void useItem(int index) {
-
         Player player = map.getPlayer();
 
         if (player.getInventory().size() <= index) {
-            Main.log("Empty slot.");
-            return; // pusty slot → nic się nie dzieje
+            log("Empty slot.");
+            return;
         }
 
         Item item = player.getInventory().get(index);
-
         item.use(player);
 
         if (item instanceof HealthPotion) {
@@ -418,17 +519,18 @@ public class Main extends Application {
     }
 
     public void nextLevel() {
+        if (!session.nextLevel()) {
+            log("You reached the end of available maps.");
+            return;
+        }
 
-        session.nextLevel();
         syncFromSession();
         minimapDirty = true;
 
         resizeCanvas();
         refresh();
 
-        if (instance != null) {
-            log("Entered level " + session.getCurrentLevel());
-        }
+        log("Entered level " + session.getCurrentLevel());
     }
 
     private void resizeCanvas() {
@@ -437,7 +539,6 @@ public class Main extends Application {
     }
 
     private void drawMinimap() {
-
         GraphicsContext g = minimap.getGraphicsContext2D();
 
         g.clearRect(0, 0, minimap.getWidth(), minimap.getHeight());
@@ -445,11 +546,9 @@ public class Main extends Application {
         double scaleX = minimap.getWidth() / map.getWidth();
         double scaleY = minimap.getHeight() / map.getHeight();
 
-        Cell cell;
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
-
-                cell = map.getCell(x, y);
+                Cell cell = map.getCell(x, y);
                 if (cell == null) continue;
 
                 if (cell.getType() == WALL) {
@@ -462,7 +561,6 @@ public class Main extends Application {
             }
         }
 
-        // 🔴 player
         Player p = map.getPlayer();
         g.setFill(javafx.scene.paint.Color.RED);
         g.fillOval(
@@ -474,7 +572,6 @@ public class Main extends Application {
     }
 
     private HBox createTopBar(Stage stage) {
-
         final double[] xOffset = {0};
         final double[] yOffset = {0};
 
@@ -487,16 +584,14 @@ public class Main extends Application {
         Button loadBtn = new Button("Load");
         Button closeBtn = new Button("X");
 
-        closeBtn.setOnAction(_ -> stage.close());
-
         styleButton(restartBtn);
         styleButton(levelBtn);
         styleButton(saveBtn);
         styleButton(loadBtn);
 
         closeBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
+        closeBtn.setOnAction(_ -> stage.close());
 
-        // RESTART
         restartBtn.setOnAction(_ -> {
             session.restartGame();
             syncFromSession();
@@ -505,7 +600,6 @@ public class Main extends Application {
             log("Game restarted");
         });
 
-        // RESTART LEVEL
         levelBtn.setOnAction(_ -> {
             session.restartLevel();
             syncFromSession();
@@ -514,25 +608,13 @@ public class Main extends Application {
             log("Level restarted");
         });
 
-        // SAVE
         saveBtn.setOnAction(_ -> showSaveDialog());
-
-        // LOAD
         loadBtn.setOnAction(_ -> showLoadDialog());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox bar = new HBox(10,
-                title,
-                restartBtn,
-                levelBtn,
-                saveBtn,
-                loadBtn,
-                spacer,
-                closeBtn
-        );
-
+        HBox bar = new HBox(10, title, restartBtn, levelBtn, saveBtn, loadBtn, spacer, closeBtn);
         bar.setPadding(new Insets(5, 10, 5, 10));
         bar.setStyle("-fx-background-color: #222;");
 
@@ -550,24 +632,9 @@ public class Main extends Application {
         return bar;
     }
 
-    private void syncFromSession() {
-        this.map = session.getMap();
-        this.engine = session.getEngine();
-    }
-    private void styleButton(Button btn) {
-
-        String normal = "-fx-background-color: #333; -fx-text-fill: white;";
-        String hover = "-fx-background-color: #555; -fx-text-fill: white;";
-
-        btn.setStyle(normal);
-
-        btn.setOnMouseEntered(_ -> btn.setStyle(hover));
-        btn.setOnMouseExited(_ -> btn.setStyle(normal));
-    }
-
     private void showSaveDialog() {
-
         Stage dialog = new Stage();
+        dialog.initOwner(primaryStage);
         dialog.initStyle(StageStyle.UTILITY);
         dialog.setTitle("Save Game");
 
@@ -610,8 +677,7 @@ public class Main extends Application {
                 dialog.close();
             });
 
-            HBox row = new HBox(10, saveBtn, deleteBtn);
-            layout.getChildren().add(row);
+            layout.getChildren().add(new HBox(10, saveBtn, deleteBtn));
         }
 
         Scene scene = new Scene(layout, 350, 250);
@@ -620,8 +686,8 @@ public class Main extends Application {
     }
 
     private void showLoadDialog() {
-
         Stage dialog = new Stage();
+        dialog.initOwner(primaryStage);
         dialog.initStyle(StageStyle.UTILITY);
         dialog.setTitle("Load Game");
 
@@ -631,9 +697,7 @@ public class Main extends Application {
         for (int i = 1; i <= 5; i++) {
             int slot = i;
 
-            SaveData data = SaveManager.exists(slot)
-                    ? SaveManager.load(slot)
-                    : null;
+            SaveData data = SaveManager.exists(slot) ? SaveManager.load(slot) : null;
 
             String label;
 
@@ -672,8 +736,7 @@ public class Main extends Application {
                 dialog.close();
             });
 
-            HBox row = new HBox(10, loadBtn, deleteBtn);
-            layout.getChildren().add(row);
+            layout.getChildren().add(new HBox(10, loadBtn, deleteBtn));
         }
 
         Scene scene = new Scene(layout, 350, 250);
@@ -715,6 +778,125 @@ public class Main extends Application {
         Scene scene = new Scene(layout, 220, 120);
         dialog.setScene(scene);
         dialog.showAndWait();
+    }
+
+    private void updateHelpText() {
+        if (helpLabel == null) return;
+
+        helpLabel.setText("""
+                Controls:
+                Arrows - move
+                1-5 - use item
+                F5 - quick save
+                F9 - quick load
+                P - pause
+                Q - quit
+                
+                Status: %s
+                """.formatted(paused ? "PAUSED" : "RUNNING"));
+    }
+
+    private void syncFromSession() {
+        this.map = session.getMap();
+        this.engine = session.getEngine();
+    }
+
+    private void styleButton(Button btn) {
+        String normal = "-fx-background-color: #333; -fx-text-fill: white;";
+        String hover = "-fx-background-color: #555; -fx-text-fill: white;";
+
+        btn.setStyle(normal);
+        btn.setOnMouseEntered(_ -> btn.setStyle(hover));
+        btn.setOnMouseExited(_ -> btn.setStyle(normal));
+    }
+
+    public void addLog(String text) {
+        if (logArea == null) return;
+        logArea.appendText(text + "\n");
+        logArea.setScrollTop(Double.MAX_VALUE);
+    }
+
+    public static void log(String text) {
+        if (instance != null) {
+            instance.addLog(text);
+        }
+    }
+
+    public static void gameOver() {
+        if (instance != null) {
+            instance.handleGameOver();
+        }
+    }
+
+    private void handleGameOver() {
+        if (gameOver) {
+            return;
+        }
+
+        gameOver = true;
+        paused = true;
+
+        log("Game over.");
+        updateHelpText();
+
+        showGameOverScreen();
+    }
+
+    private void showGameOverScreen() {
+        stopGameLoop();
+
+        gameOver = false;
+        paused = false;
+        minimapDirty = true;
+        cameraX = 0;
+        cameraY = 0;
+
+        session = new GameSession();
+        syncFromSession();
+
+        Label title = new Label("GAME OVER");
+        title.setStyle("""
+            -fx-text-fill: #b3261e;
+            -fx-font-size: 56px;
+            -fx-font-weight: bold;
+            -fx-effect: dropshadow(gaussian, black, 10, 0.8, 3, 3);
+            """);
+
+        Label subtitle = new Label("The dungeon claimed another hero.");
+        subtitle.setStyle("-fx-text-fill: #f5d27a; -fx-font-size: 18px;");
+
+        Button loadBtn = createMenuButton("LOAD GAME");
+        Button menuBtn = createMenuButton("BACK TO MENU");
+        Button quitBtn = createMenuButton("QUIT");
+
+        loadBtn.setOnAction(_ -> {
+            gameOver = false;
+            paused = false;
+            showGameScreen();
+            showLoadDialog();
+        });
+
+        menuBtn.setOnAction(_ -> {
+            gameOver = false;
+            paused = false;
+            showTitleScreen();
+        });
+
+        quitBtn.setOnAction(_ -> primaryStage.close());
+
+        HBox buttons = new HBox(20, loadBtn, menuBtn, quitBtn);
+        buttons.setAlignment(javafx.geometry.Pos.CENTER);
+
+        VBox layout = new VBox(25, title, subtitle, buttons);
+        layout.setAlignment(javafx.geometry.Pos.CENTER);
+        layout.setStyle("""
+            -fx-background-color: #111;
+            -fx-padding: 60;
+            """);
+
+        Scene scene = new Scene(layout, 900, 700);
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
     public static void main(String[] args) {

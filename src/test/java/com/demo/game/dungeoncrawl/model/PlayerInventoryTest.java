@@ -64,6 +64,16 @@ class PlayerInventoryTest {
     }
 
     @Test
+    void healthPotionShouldNotHealAboveMaxHp() {
+        Player player = createPlayer();
+        player.takeDamage(2);
+
+        new HealthPotion(player.getCell()).use(player);
+
+        assertEquals(player.getMaxHp(), player.getHp());
+    }
+
+    @Test
     void firstWeaponPickupShouldEquipWeaponAndIncreaseAttackStat() {
         Player player = createPlayer();
         Weapon sword = new Weapon("Iron Sword", 2);

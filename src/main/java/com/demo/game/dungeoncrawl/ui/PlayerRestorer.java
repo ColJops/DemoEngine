@@ -19,6 +19,8 @@ final class PlayerRestorer {
 
         player.setKills(data.player.kills);
         player.setHp(data.player.hp);
+        player.setBaseAttack(data.player.baseAttack);
+        player.setBaseDefense(data.player.baseDefense);
         player.setPosition(data.player.x, data.player.y, map);
         player.getInventory().clear();
 

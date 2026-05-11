@@ -7,12 +7,14 @@ public abstract class Actor {
 
     protected Cell cell;
     protected int hp;
+    protected int maxHp;
     protected int attack;
     protected int defense;
 
     public Actor(Cell cell, int hp, int attack, int defense) {
         this.cell = cell;
         this.hp = hp;
+        this.maxHp = hp;
         this.attack = attack;
         this.defense = defense;
 
@@ -47,7 +49,20 @@ public abstract class Actor {
         this.defense = defense;
     }
 
+    public void heal(int amount) {
+        if (amount <= 0) {
+            return;
+        }
+
+        hp = Math.min(maxHp, hp + amount);
+    }
+
     public void takeDamage(int damage) {
+        if (damage <= 0) {
+            heal(-damage);
+            return;
+        }
+
         hp = Math.max(0, hp - damage);
     }
 
@@ -56,9 +71,17 @@ public abstract class Actor {
     }
 
     public void setHp(int hp) {
-        this.hp = hp;
+        this.hp = Math.max(0, Math.min(hp, maxHp));
     }
 
+    public int getMaxHp() {
+        return maxHp;
+    }
+
+    public void setMaxHp(int maxHp) {
+        this.maxHp = maxHp;
+        this.hp = Math.min(this.hp, maxHp);
+    }
 
     @Deprecated
     public void attack(Actor target) {

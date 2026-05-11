@@ -4,6 +4,7 @@ import com.demo.game.dungeoncrawl.dto.SaveData;
 import com.demo.game.dungeoncrawl.model.Player;
 import com.demo.game.dungeoncrawl.model.item.Key;
 import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -58,5 +59,36 @@ class GameSessionTest {
         assertEquals(20, restartedGameMap.getHeight());
         assertEquals(20, restartedGamePlayer.getHp());
         assertEquals(0, restartedGamePlayer.getKills());
+    }
+
+    @Test
+    void nextLevelShouldKeepStackedBaseStats() {
+        GameSession session = new GameSession();
+        Player player = session.getMap().getPlayer();
+        player.pickUp(new Weapon("Iron Sword", 2));
+        player.pickUp(new Weapon("Steel Sword", 3));
+        int expectedAttack = player.getAttack();
+        int expectedBaseAttack = player.getBaseAttack();
+
+        assertTrue(session.nextLevel());
+
+        Player nextLevelPlayer = session.getMap().getPlayer();
+        assertEquals(2, session.getCurrentLevel());
+        assertEquals(expectedAttack, nextLevelPlayer.getAttack());
+        assertEquals(expectedBaseAttack, nextLevelPlayer.getBaseAttack());
+        assertEquals("Iron Sword", nextLevelPlayer.getEquippedWeapon().getName());
+    }
+
+    @Test
+    void nextLevelShouldReturnFalseAndKeepCurrentMapWhenThereIsNoNextMap() {
+        GameSession session = new GameSession();
+
+        while (session.nextLevel()) {
+            assertNotNull(session.getMap());
+        }
+
+        assertEquals(11, session.getCurrentLevel());
+        assertNotNull(session.getMap());
+        assertNotNull(session.getEngine());
     }
 }

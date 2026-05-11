@@ -34,6 +34,11 @@ class MapLoaderTest {
     }
 
     @Test
+    void missingMapShouldReturnNullWhenStrictLoadingIsDisabled() {
+        assertNull(MapLoader.loadMap("missing-map.txt"));
+    }
+
+    @Test
     void biomeShouldComeFromMapFile() {
         GameMap map = MapLoader.loadMap("custom-biome-map.txt");
 

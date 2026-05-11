@@ -14,12 +14,23 @@ import java.nio.file.Path;
 public class SaveManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static Path slotPath(int slot) {
+        return SAVE_DIR.resolve("save_slot_" + slot + ".json");
+    }
+    private static void ensureSaveDirExists() throws IOException {
+        Files.createDirectories(SAVE_DIR);
+    }
+    private static final Path SAVE_DIR = Path.of(
+            System.getProperty("user.home"),
+            ".dungeoncrawl",
+            "saves"
+    );
 
     // =========================
     // SAVE (SLOT)
     // =========================
     public static void save(GameMap map, int level, int slot) {
-        Path path = Path.of("save_slot_" + slot + ".json");
+        Path path = slotPath(slot);
         save(map, level, path);
     }
 
@@ -41,6 +52,8 @@ public class SaveManager {
         pd.y = player.getY();
         pd.hp = player.getHp();
         pd.kills = player.getKills();
+        pd.baseAttack = player.getBaseAttack();
+        pd.baseDefense = player.getBaseDefense();
 
         pd.weapon = player.getEquippedWeapon() != null
                 ? ItemParser.itemId(player.getEquippedWeapon())
@@ -97,6 +110,12 @@ public class SaveManager {
         }
 
         // ===== WRITE JSON =====
+        try {
+            ensureSaveDirExists();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
         try (Writer writer = Files.newBufferedWriter(path)) {
             GSON.toJson(data, writer);
         } catch (IOException e) {
@@ -108,10 +127,10 @@ public class SaveManager {
     // LOAD (SLOT)
     // =========================
     public static SaveData load(int slot) {
-        Path path = Path.of("save_slot_" + slot + ".json");
+        Path path = slotPath(slot);
 
         if (!Files.exists(path)) {
-            return null; // ✔ brak pliku = OK
+            return null;
         }
 
         try {
@@ -147,7 +166,7 @@ public class SaveManager {
     }
 
     public static boolean exists(int slot) {
-        return Files.exists(Path.of("save_slot_" + slot + ".json"));
+        return Files.exists(slotPath(slot));
     }
 
     //Formatowanie czasu
@@ -158,7 +177,7 @@ public class SaveManager {
 
     public static void delete(int slot) {
         try {
-            Files.deleteIfExists(Path.of("save_slot_" + slot + ".json"));
+            Files.deleteIfExists(slotPath(slot));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -11,14 +11,21 @@ import com.demo.game.dungeoncrawl.model.Player;
 import com.demo.game.dungeoncrawl.model.enemy.Wasp;
 import com.demo.game.dungeoncrawl.model.item.Key;
 import com.demo.game.dungeoncrawl.model.item.KeyType;
+import com.demo.game.dungeoncrawl.model.item.Weapon;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.CellType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SaveManagerTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
     void restoreMapShouldRestorePlayerInventoryEquipmentEnemiesAndOpenDoors() {
@@ -71,7 +78,27 @@ class SaveManagerTest {
         SaveData data = new SaveData();
 
         assertEquals(0, data.version);
-        assertEquals(2, SaveData.CURRENT_VERSION);
+        assertEquals(3, SaveData.CURRENT_VERSION);
+    }
+
+    @Test
+    void saveAndLoadShouldPreserveStackedBaseStats() {
+        GameMap map = MapLoader.loadMap("map1.txt");
+        Player player = map.getPlayer();
+        player.pickUp(new Weapon("Iron Sword", 2));
+        player.pickUp(new Weapon("Steel Sword", 3));
+        int attackBeforeSave = player.getAttack();
+        Path savePath = tempDir.resolve("save.json");
+
+        SaveManager.save(map, 1, savePath);
+        SaveData loadedData = SaveManager.load(savePath);
+        GameMap restored = SaveManager.restoreMap(loadedData);
+
+        Player restoredPlayer = restored.getPlayer();
+        assertEquals(SaveData.CURRENT_VERSION, loadedData.version);
+        assertEquals(attackBeforeSave, restoredPlayer.getAttack());
+        assertEquals(player.getBaseAttack(), restoredPlayer.getBaseAttack());
+        assertEquals("Iron Sword", restoredPlayer.getEquippedWeapon().getName());
     }
 
     @Test

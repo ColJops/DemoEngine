@@ -21,35 +21,50 @@ public class MapLoader {
 
     public static GameMap loadMap(String mapName) {
         InputStream is = MapLoader.class.getResourceAsStream("/" + mapName);
-        Scanner scanner = new Scanner(is);
 
-        int width = scanner.nextInt();
-        int height = scanner.nextInt();
-        scanner.nextLine();
+        if (is == null) {
+            String message = "Map resource not found: " + mapName;
 
-        GameMap map = new GameMap(width, height, CellType.EMPTY);
-        map.setBiome(readBiome(scanner.nextLine(), mapName));
-
-        Map<Character, Consumer<Cell>> mapDefinitions = createMapDefinitions(map);
-
-        for (int y = 0; y < height; y++) {
-            String line = scanner.hasNextLine() ? scanner.nextLine() : "";
-
-            for (int x = 0; x < width; x++) {
-
-                Cell cell = map.getCell(x, y);
-
-                char c = (x < line.length()) ? line.charAt(x) : '#';
-                Consumer<Cell> definition = mapDefinitions.get(c);
-                if (definition == null) {
-                    warnOrThrow("Unrecognized character '" + c + "' in " + mapName
-                            + " at x=" + x + ", y=" + y + ". Leaving cell empty.");
-                    continue;
-                }
-                definition.accept(cell);
+            if (STRICT_LOADING) {
+                throw new IllegalArgumentException(message);
             }
+
+            LOGGER.warning(message);
+            return null;
         }
-        return map;
+
+        try (Scanner scanner = new Scanner(is)) {
+
+            int width = scanner.nextInt();
+            int height = scanner.nextInt();
+            scanner.nextLine();
+
+            GameMap map = new GameMap(width, height, CellType.EMPTY);
+            map.setBiome(readBiome(scanner.nextLine(), mapName));
+
+            Map<Character, Consumer<Cell>> mapDefinitions = createMapDefinitions(map);
+
+            for (int y = 0; y < height; y++) {
+                String line = scanner.hasNextLine() ? scanner.nextLine() : "";
+
+                for (int x = 0; x < width; x++) {
+                    Cell cell = map.getCell(x, y);
+
+                    char c = (x < line.length()) ? line.charAt(x) : '#';
+                    Consumer<Cell> definition = mapDefinitions.get(c);
+
+                    if (definition == null) {
+                        warnOrThrow("Unrecognized character '" + c + "' in " + mapName
+                                + " at x=" + x + ", y=" + y + ". Leaving cell empty.");
+                        continue;
+                    }
+
+                    definition.accept(cell);
+                }
+            }
+
+            return map;
+        }
     }
 
     private static BiomeType readBiome(String line, String mapName) {

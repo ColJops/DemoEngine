@@ -10,6 +10,14 @@ public class CombatSystem {
 
     public static void attack(Actor attacker, Actor target, GameMap map) {
 
+        if (attacker == null || target == null) {
+            return;
+        }
+
+        if (!attacker.isAlive() || !target.isAlive()) {
+            return;
+        }
+
         int damage = Math.max(1, attacker.getAttack() - target.getDefense());
 
         target.takeDamage(damage);
@@ -22,19 +30,34 @@ public class CombatSystem {
                 + " damage.");
 
         if (!target.isAlive()) {
-            kill(attacker, target, map);
+            handleDeath(attacker, target, map);
         }
     }
 
-    private static void kill(Actor attacker, Actor target, GameMap map) {
+    private static void handleDeath(Actor attacker, Actor target, GameMap map) {
 
-        target.getCell().setActor(null);
-        map.removeActor(target);
+        // =========================
+        // PLAYER DEATH
+        // =========================
+        if (target instanceof Player) {
+            Main.log("You have been slain...");
+            Main.gameOver();
+            return;
+        }
 
-        Main.log("You killed a " + target.getClass().getSimpleName() + "!");
+        // =========================
+        // ENEMY DEATH
+        // =========================
+        if (target instanceof Enemy) {
+            target.getCell().setActor(null);
+            map.removeActor(target);
 
-        if (attacker instanceof Player player && target instanceof Enemy) {
-            player.addKill();
+            if (attacker instanceof Player player) {
+                player.addKill();
+                Main.log("You killed a " + target.getClass().getSimpleName() + "!");
+            } else {
+                Main.log(target.getClass().getSimpleName() + " died.");
+            }
         }
     }
 }

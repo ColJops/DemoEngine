@@ -9,5 +9,7 @@ public class PlayerData {
     public int kills;
     public String weapon;
     public String shield;
+    public int baseAttack = 2;
+    public int baseDefense = 1;
     public List<String> inventory = new ArrayList<>();
 }

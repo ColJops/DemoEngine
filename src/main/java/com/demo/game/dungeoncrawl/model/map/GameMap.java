@@ -9,8 +9,8 @@ import java.util.List;
 public class GameMap {
     private final int width;
     private final int height;
-    private Cell[][] cells;
-    private List<Actor> actors = new ArrayList<>(); //Przechowujemy listę aktorów
+    private final Cell[][] cells;
+    private final List<Actor> actors = new ArrayList<>(); //Przechowujemy listę aktorów
     private BiomeType biome;
 
     private Player player;
@@ -27,7 +27,8 @@ public class GameMap {
     }
 
     public boolean canMove(int x, int y) {
-        return getCell(x, y).isWalkable();
+        Cell cell = getCell(x, y);
+        return cell != null && cell.isWalkable();
     }
 
     public Cell getCell(int column, int row) {

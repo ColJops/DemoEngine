@@ -37,7 +37,9 @@ final class EnemyRestorer {
             if (cell == null) {
                 continue;
             }
-
+            if (cell.getActor() != null || !cell.isWalkable()) {
+                continue;
+            }
             Enemy enemy = GameObjectFactory.createEnemy(enemyData.type, cell);
             if (enemy != null) {
                 enemy.setHp(enemyData.hp);

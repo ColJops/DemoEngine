@@ -1,5 +1,6 @@
 package com.demo.game.dungeoncrawl.model.enemy;
 
+import com.demo.game.dungeoncrawl.combat.CombatSystem;
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.map.Cell;
@@ -23,24 +24,33 @@ public class Bat extends Enemy implements Drawable {
     @Override
     public void update(long now, GameMap map) {
 
-        if (now - lastMove < 300_000_000) return; // szybszy niż skeleton
+        if (now - lastMove < 300_000_000) {
+            return;
+        }
+
         lastMove = now;
 
         int[][] dirs = {
-                {0,-1},{0,1},{-1,0},{1,0}
+                {0, -1}, {0, 1}, {-1, 0}, {1, 0}
         };
 
-        int[] d = dirs[new Random().nextInt(dirs.length)];
+        for (int[] d : dirs) {
+            Cell next = getCell().getNeighbor(d[0], d[1]);
 
+            if (next != null && next.getActor() instanceof Player target) {
+                CombatSystem.attack(this, target, map);
+                return;
+            }
+        }
+
+        int[] d = dirs[new Random().nextInt(dirs.length)];
         Cell next = getCell().getNeighbor(d[0], d[1]);
 
-        if (next == null) return;
+        if (next == null) {
+            return;
+        }
 
-        Actor target = next.getActor();
-
-        if (target instanceof Player) {
-            attack(target);
-        } else {
+        if (next.getActor() == null) {
             move(d[0], d[1]);
         }
     }

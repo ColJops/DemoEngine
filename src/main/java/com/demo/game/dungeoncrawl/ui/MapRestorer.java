@@ -26,6 +26,12 @@ final class MapRestorer {
         }
 
         GameMap map = MapLoader.loadMap("map" + data.level + ".txt");
+
+        if (map == null) {
+            Main.log("Could not restore save: map" + data.level + ".txt not found.");
+            return null;
+        }
+
         List<RestoredItem> restoredItems = createRestoredItems(data, map);
 
         EnemyRestorer.clearEnemies(map);

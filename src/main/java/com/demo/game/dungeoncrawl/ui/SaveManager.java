@@ -6,6 +6,9 @@ import com.demo.game.dungeoncrawl.model.*;
 import com.demo.game.dungeoncrawl.model.map.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.*;
 import java.nio.file.Files;
@@ -13,12 +16,18 @@ import java.nio.file.Path;
 
 public class SaveManager {
 
+    static Logger logger = LoggerFactory.getLogger(SaveManager.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     private static Path slotPath(int slot) {
         return SAVE_DIR.resolve("save_slot_" + slot + ".json");
     }
-    private static void ensureSaveDirExists() throws IOException {
-        Files.createDirectories(SAVE_DIR);
+    private static void ensureSaveDirExists(Path path) throws IOException {
+        Path parent = path.getParent();
+
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
     }
     private static final Path SAVE_DIR = Path.of(
             System.getProperty("user.home"),
@@ -111,15 +120,15 @@ public class SaveManager {
 
         // ===== WRITE JSON =====
         try {
-            ensureSaveDirExists();
+            ensureSaveDirExists(path);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Could not create save directory: {}", e.getMessage());
             return;
         }
         try (Writer writer = Files.newBufferedWriter(path)) {
             GSON.toJson(data, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Could not write save: {}", e.getMessage());
         }
     }
 
@@ -138,7 +147,7 @@ public class SaveManager {
             return SaveMigrator.migrate(GSON.fromJson(json, SaveData.class));
         } catch (Exception e) {
             System.out.println("Error reading save: " + path);
-            e.printStackTrace();
+            logger.error("Error reading save: {}", e.getMessage());
             return null;
         }
     }
@@ -179,7 +188,7 @@ public class SaveManager {
         try {
             Files.deleteIfExists(slotPath(slot));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Could not delete save: {}", e.getMessage());
         }
     }
 }

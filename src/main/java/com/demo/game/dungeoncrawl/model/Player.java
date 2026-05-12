@@ -23,7 +23,7 @@ public class Player extends Actor implements Drawable {
     private Weapon equippedWeapon;
     private Shield equippedShield;
 
-    private List<Item> inventory = new ArrayList<>();
+    private final List<Item> inventory = new ArrayList<>();
 
     public Player(Cell cell) {
         super(cell, 20, 6, 2);
@@ -41,7 +41,9 @@ public class Player extends Actor implements Drawable {
     public int getKills() {
         return kills;
     }
-    public int setKills(int kills) { return this.kills = kills; };
+    public void setKills(int kills) {
+        this.kills = Math.max(0, kills);
+    }
 
     public void addItem(Item item) {
         inventory.add(item);
@@ -57,14 +59,6 @@ public class Player extends Actor implements Drawable {
 
     public Shield getEquippedShield() {
         return equippedShield;
-    }
-
-    public int getX() {
-        return cell.getX();
-    }
-
-    public int getY() {
-        return cell.getY();
     }
 
     public boolean hasKey(KeyType type) {

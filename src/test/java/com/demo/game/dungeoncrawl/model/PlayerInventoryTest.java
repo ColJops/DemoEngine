@@ -58,7 +58,7 @@ class PlayerInventoryTest {
         Player player = createPlayer();
         player.takeDamage(7);
 
-        new HealthPotion(player.getCell()).use(player);
+        new HealthPotion().use(player);;
 
         assertEquals(18, player.getHp());
     }
@@ -68,7 +68,7 @@ class PlayerInventoryTest {
         Player player = createPlayer();
         player.takeDamage(2);
 
-        new HealthPotion(player.getCell()).use(player);
+        new HealthPotion().use(player);
 
         assertEquals(player.getMaxHp(), player.getHp());
     }

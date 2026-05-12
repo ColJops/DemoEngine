@@ -2,7 +2,6 @@ package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.logic.Drawable;
 import com.demo.game.dungeoncrawl.model.item.ItemType;
-import com.demo.game.dungeoncrawl.model.map.Cell;
 
 public abstract class Item  implements Drawable{
 
@@ -28,7 +27,7 @@ public abstract class Item  implements Drawable{
         return tileName;
     }
 
-    public void use(Player player) {
-        // default: nic nie robi
+    public boolean use(Player player) {
+        return false;
     }
 }

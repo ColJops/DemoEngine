@@ -15,6 +15,8 @@ public class PatrolAggroAI implements EnemyAI {
     private boolean chasing = false;
 
     private final ChaseAI chaseAI = new ChaseAI();
+    private long lastPatrolMove = 0;
+    private static final long PATROL_COOLDOWN = 600_000_000L;
 
     public PatrolAggroAI(List<int[]> patrolPoints, int aggroRadius) {
         this.patrolPoints = patrolPoints;
@@ -29,24 +31,26 @@ public class PatrolAggroAI implements EnemyAI {
         int dist = Math.abs(player.getCell().getX() - enemy.getCell().getX())
                 + Math.abs(player.getCell().getY() - enemy.getCell().getY());
 
-        // 🔴 AGGRO
+        //  AGGRO
         if (dist <= aggroRadius) {
             chasing = true;
         }
 
-        // 😴 LOSE AGGRO
+        //  LOSE AGGRO
         if (dist > aggroRadius + 2) {
             chasing = false;
         }
 
-        // 🔥 CHASE MODE
+        //  CHASE MODE
         if (chasing) {
             chaseAI.update(enemy, now, map);
             return;
         }
 
-        // 🟢 PATROL MODE
-        patrol(enemy);
+        if (now - lastPatrolMove >= PATROL_COOLDOWN) {
+            patrol(enemy);
+            lastPatrolMove = now;
+        }
     }
 
     private void patrol(Enemy enemy) {

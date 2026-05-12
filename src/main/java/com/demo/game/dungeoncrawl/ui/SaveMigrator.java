@@ -33,7 +33,9 @@ final class SaveMigrator {
             migrateV1ToV2(data);
         }
 
+        ensureCollections(data);
         ensurePlayerDefaults(data);
+
         data.version = SaveData.CURRENT_VERSION;
         return data;
     }

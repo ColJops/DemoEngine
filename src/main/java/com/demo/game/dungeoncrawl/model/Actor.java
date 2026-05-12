@@ -1,7 +1,6 @@
 package com.demo.game.dungeoncrawl.model;
 
 import com.demo.game.dungeoncrawl.model.map.Cell;
-import com.demo.game.dungeoncrawl.ui.Main;
 
 public abstract class Actor {
 
@@ -59,7 +58,6 @@ public abstract class Actor {
 
     public void takeDamage(int damage) {
         if (damage <= 0) {
-            heal(-damage);
             return;
         }
 
@@ -71,7 +69,7 @@ public abstract class Actor {
     }
 
     public void setHp(int hp) {
-        this.hp = Math.max(0, Math.min(hp, maxHp));
+        this.hp = Math.clamp(maxHp, 0, hp);
     }
 
     public int getMaxHp() {
@@ -81,12 +79,6 @@ public abstract class Actor {
     public void setMaxHp(int maxHp) {
         this.maxHp = maxHp;
         this.hp = Math.min(this.hp, maxHp);
-    }
-
-    @Deprecated
-    public void attack(Actor target) {
-        int damage = Math.max(1, getAttack() - target.getDefense());
-        target.takeDamage(damage);
     }
 
     public void move(int dx, int dy) {

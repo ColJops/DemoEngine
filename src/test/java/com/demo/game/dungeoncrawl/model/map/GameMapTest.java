@@ -67,4 +67,14 @@ class GameMapTest {
 
         assertFalse(map.getActors().contains(skeleton));
     }
+
+    @Test
+    void canMoveShouldReturnFalseOutsideMap() {
+        GameMap map = new GameMap(3, 3, CellType.FLOOR);
+
+        assertFalse(map.canMove(-1, 0));
+        assertFalse(map.canMove(0, -1));
+        assertFalse(map.canMove(3, 0));
+        assertFalse(map.canMove(0, 3));
+    }
 }

@@ -1,5 +1,6 @@
 package com.demo.game.dungeoncrawl.model;
 
+import com.demo.game.dungeoncrawl.combat.CombatSystem;
 import com.demo.game.dungeoncrawl.model.enemy.Skeleton;
 import com.demo.game.dungeoncrawl.model.item.Key;
 import com.demo.game.dungeoncrawl.model.item.KeyType;
@@ -25,7 +26,7 @@ class ActorTest {
 
         int initialHp = skeleton.getHp();
 
-        player.attack(skeleton);
+        CombatSystem.attack(player, skeleton, map);
 
         assertTrue(skeleton.getHp() < initialHp);
     }
@@ -110,7 +111,7 @@ class ActorTest {
 
         int initialHp = skeleton.getHp();
 
-        player.attack(skeleton);
+        CombatSystem.attack(player, skeleton, map);
 
         int damage = initialHp - skeleton.getHp();
 
@@ -128,13 +129,8 @@ class ActorTest {
         Skeleton skeleton = new Skeleton(map.getCell(1,2));
         map.addActor(skeleton);
 
-        // zabijamy skeletona
         while (skeleton.isAlive()) {
-            player.attack(skeleton);
-        }
-
-        if (!skeleton.isAlive()) {
-            player.addKill();
+            CombatSystem.attack(player, skeleton, map);
         }
 
         assertEquals(1, player.getKills());
@@ -153,7 +149,7 @@ class ActorTest {
 
         int initialHp = skeleton.getHp();
 
-        player.attack(skeleton);
+        CombatSystem.attack(player, skeleton, map);
 
         int damage = initialHp - skeleton.getHp();
 

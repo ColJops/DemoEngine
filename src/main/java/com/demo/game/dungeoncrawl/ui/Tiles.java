@@ -6,23 +6,27 @@ import com.demo.game.dungeoncrawl.model.map.BiomeType;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Tiles {
-    public static int TILE_WIDTH = 32;
-    public static int TILE_HEIGHT = 32;
+    public static final int TILE_WIDTH = 32;
+    public static final int TILE_HEIGHT = 32;
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Tiles.class);
 
     private static Image tileset;
-    private static Map<String, Tile> tileMap = new HashMap<>();
+    private static final Map<String, Tile> tileMap = new HashMap<>();
+
     public static class Tile {
         public final int x, y, w, h;
+
         Tile(int i, int j) {
             x = i * (TILE_WIDTH + 2);
-            y = j * (TILE_WIDTH + 2);
+            y = j * (TILE_HEIGHT + 2);
             w = TILE_WIDTH;
-            h = TILE_WIDTH;
+            h = TILE_HEIGHT;
         }
     }
 
@@ -73,7 +77,7 @@ public class Tiles {
         Tile tile = tileMap.get(tileName);
 
         if (tile == null) {
-            System.out.println("Missing tile: " + tileName);
+            log.warn("Missing tile: " + tileName);
             return;
         }
 

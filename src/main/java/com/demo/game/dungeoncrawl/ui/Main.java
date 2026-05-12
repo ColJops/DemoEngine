@@ -2,7 +2,6 @@ package com.demo.game.dungeoncrawl.ui;
 
 import com.demo.game.dungeoncrawl.dto.SaveData;
 import com.demo.game.dungeoncrawl.model.*;
-import com.demo.game.dungeoncrawl.model.item.HealthPotion;
 import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import com.demo.game.dungeoncrawl.engine.GameEngine;
@@ -22,8 +21,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
+import java.util.Objects;
+
 import static com.demo.game.dungeoncrawl.model.map.CellType.WALL;
-import static javafx.application.Application.launch;
 
 public class Main extends Application {
 
@@ -74,7 +74,7 @@ public class Main extends Application {
     private void showTitleScreen() {
         stopGameLoop();
 
-        Image bgImage = new Image(getClass().getResource("/images/title_background.png").toExternalForm());
+        Image bgImage = new Image(Objects.requireNonNull(getClass().getResource("/images/title_background.png")).toExternalForm());
 
         ImageView background = new ImageView(bgImage);
         background.setFitWidth(900);
@@ -450,7 +450,7 @@ public class Main extends Application {
         int maxHp = player.getMaxHp();
 
         double hpProgress = maxHp > 0 ? (double) hp / maxHp : 0;
-        hpBar.setProgress(Math.max(0, Math.min(1, hpProgress)));
+        hpBar.setProgress(Math.clamp(hpProgress, 0, 1));
 
         hpLabel.setText("HP: " + hp + "/" + maxHp);
         if (hp > 10) {
@@ -511,10 +511,13 @@ public class Main extends Application {
         }
 
         Item item = player.getInventory().get(index);
-        item.use(player);
+        boolean consumed = item.use(player);
 
-        if (item instanceof HealthPotion) {
+        if (consumed) {
             player.getInventory().remove(index);
+        }
+        if (!consumed) {
+            log("Nothing happened.");
         }
     }
 

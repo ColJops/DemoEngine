@@ -30,7 +30,7 @@ public final class ItemFactory {
 
     private static Map<ItemType, Function<ItemDescriptor, Item>> createItemRegistry() {
         Map<ItemType, Function<ItemDescriptor, Item>> itemRegistry = new HashMap<>();
-        itemRegistry.put(ItemType.CONSUMABLE, descriptor -> new HealthPotion(null));
+        itemRegistry.put(ItemType.CONSUMABLE, descriptor -> new HealthPotion());
         itemRegistry.put(ItemType.KEY, descriptor -> new Key(Objects.requireNonNull(descriptor.keyType())));
         itemRegistry.put(ItemType.WEAPON, descriptor -> new Weapon(
                 Objects.requireNonNull(descriptor.name()),

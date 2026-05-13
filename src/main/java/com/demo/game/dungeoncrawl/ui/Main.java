@@ -30,6 +30,18 @@ public class Main extends Application {
     private Stage primaryStage;
     private AnimationTimer gameLoop;
     private boolean gameOver = false;
+    private long gameStartNano = 0;
+    private long pausedStartedNano = 0;
+    private long totalPausedNano = 0;
+    private long finalSurvivalNano = 0;
+    private static final double GAME_OVER_KILLS_X = 590;
+    private static final double GAME_OVER_KILLS_Y = 305;
+
+    private static final double GAME_OVER_LEVEL_X = 590;
+    private static final double GAME_OVER_LEVEL_Y = 350;
+
+    private static final double GAME_OVER_TIME_X = 545;
+    private static final double GAME_OVER_TIME_Y = 400;
 
     private GameMap map;
     private GameEngine engine;
@@ -174,6 +186,7 @@ public class Main extends Application {
 
         session = new GameSession();
         syncFromSession();
+        startGameTimer();
 
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
         int canvasHeight = VIEW_HEIGHT * Tiles.TILE_HEIGHT;
@@ -392,6 +405,13 @@ public class Main extends Application {
 
                 case P:
                     paused = !paused;
+
+                    if (paused) {
+                        pauseGameTimer();
+                    } else {
+                        resumeGameTimer();
+                    }
+
                     log(paused ? "Game paused" : "Game resumed");
                     updateHelpText();
                     break;
@@ -749,6 +769,7 @@ public class Main extends Application {
 
     private void pauseAndConfirmQuit(Stage owner) {
         paused = true;
+        pauseGameTimer();
         updateHelpText();
 
         Stage dialog = new Stage();
@@ -770,6 +791,7 @@ public class Main extends Application {
         noBtn.setOnAction(_ -> {
             dialog.close();
             paused = false;
+            resumeGameTimer();
             updateHelpText();
             log("Game resumed");
         });
@@ -838,6 +860,7 @@ public class Main extends Application {
 
         gameOver = true;
         paused = true;
+        finalSurvivalNano = getSurvivalNano();
 
         log("Game over.");
         updateHelpText();
@@ -848,58 +871,141 @@ public class Main extends Application {
     private void showGameOverScreen() {
         stopGameLoop();
 
-        gameOver = false;
-        paused = false;
-        minimapDirty = true;
-        cameraX = 0;
-        cameraY = 0;
+        Player player = map != null ? map.getPlayer() : null;
 
-        session = new GameSession();
-        syncFromSession();
+        int kills = player != null ? player.getKills() : 0;
+        int level = session != null ? session.getCurrentLevel() : 1;
+        String survivedTime = formatDuration(finalSurvivalNano);
 
-        Label title = new Label("GAME OVER");
-        title.setStyle("""
-            -fx-text-fill: #b3261e;
-            -fx-font-size: 56px;
-            -fx-font-weight: bold;
-            -fx-effect: dropshadow(gaussian, black, 10, 0.8, 3, 3);
-            """);
+        Image bgImage = new Image(Objects.requireNonNull(
+                getClass().getResource("/images/game_over_background.png")
+        ).toExternalForm());
 
-        Label subtitle = new Label("The dungeon claimed another hero.");
-        subtitle.setStyle("-fx-text-fill: #f5d27a; -fx-font-size: 18px;");
+        ImageView background = new ImageView(bgImage);
+        background.setFitWidth(900);
+        background.setFitHeight(700);
+        background.setPreserveRatio(false);
 
-        Button loadBtn = createMenuButton("LOAD GAME");
-        Button menuBtn = createMenuButton("BACK TO MENU");
-        Button quitBtn = createMenuButton("QUIT");
+        Label killsValue = createGameOverOverlayValue(String.valueOf(kills));
+        Label levelValue = createGameOverOverlayValue(String.valueOf(level));
+        Label timeValue = createGameOverOverlayValue(survivedTime);
 
-        loadBtn.setOnAction(_ -> {
+        // Pozycje pod grafikę 1536x1024 przeskalowaną do 900x700.
+        // Możliwe, że trzeba będzie lekko dostroić X/Y po odpaleniu.
+        killsValue.setLayoutX(GAME_OVER_KILLS_X);
+        killsValue.setLayoutY(GAME_OVER_KILLS_Y);
+
+        levelValue.setLayoutX(GAME_OVER_LEVEL_X);
+        levelValue.setLayoutY(GAME_OVER_LEVEL_Y);
+
+        timeValue.setLayoutX(GAME_OVER_TIME_X);
+        timeValue.setLayoutY(GAME_OVER_TIME_Y);
+
+        Button loadHotspot = createInvisibleHotspot(70, 585, 245, 70);
+        Button menuHotspot = createInvisibleHotspot(330, 585, 245, 70);
+        Button quitHotspot = createInvisibleHotspot(590, 585, 245, 70);
+
+        loadHotspot.setOnAction(_ -> {
             gameOver = false;
             paused = false;
             showGameScreen();
             showLoadDialog();
         });
 
-        menuBtn.setOnAction(_ -> {
+        menuHotspot.setOnAction(_ -> {
             gameOver = false;
             paused = false;
             showTitleScreen();
         });
 
-        quitBtn.setOnAction(_ -> primaryStage.close());
+        quitHotspot.setOnAction(_ -> primaryStage.close());
 
-        HBox buttons = new HBox(20, loadBtn, menuBtn, quitBtn);
-        buttons.setAlignment(javafx.geometry.Pos.CENTER);
+        Pane overlay = new Pane();
+        overlay.setPrefSize(900, 700);
+        overlay.getChildren().addAll(
+                killsValue,
+                levelValue,
+                timeValue,
+                loadHotspot,
+                menuHotspot,
+                quitHotspot
+        );
 
-        VBox layout = new VBox(25, title, subtitle, buttons);
-        layout.setAlignment(javafx.geometry.Pos.CENTER);
-        layout.setStyle("""
-            -fx-background-color: #111;
-            -fx-padding: 60;
-            """);
+        StackPane root = new StackPane(background, overlay);
 
-        Scene scene = new Scene(layout, 900, 700);
+        Scene scene = new Scene(root, 900, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void startGameTimer() {
+        gameStartNano = System.nanoTime();
+        pausedStartedNano = 0;
+        totalPausedNano = 0;
+        finalSurvivalNano = 0;
+    }
+
+    private long getSurvivalNano() {
+        if (gameStartNano == 0) {
+            return 0;
+        }
+
+        long now = System.nanoTime();
+        long currentlyPausedNano = pausedStartedNano > 0 ? now - pausedStartedNano : 0;
+
+        return now - gameStartNano - totalPausedNano - currentlyPausedNano;
+    }
+
+    private String formatDuration(long nano) {
+        long totalSeconds = nano / 1_000_000_000L;
+
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        return "%02d:%02d:%02d".formatted(hours, minutes, seconds);
+    }
+
+    private void pauseGameTimer() {
+        if (pausedStartedNano == 0) {
+            pausedStartedNano = System.nanoTime();
+        }
+    }
+
+    private void resumeGameTimer() {
+        if (pausedStartedNano > 0) {
+            totalPausedNano += System.nanoTime() - pausedStartedNano;
+            pausedStartedNano = 0;
+        }
+    }
+
+    private Label createGameOverOverlayValue(String text) {
+        Label label = new Label(text);
+        label.setStyle("""
+        -fx-text-fill: #f5b642;
+        -fx-font-size: 20px;
+        -fx-font-weight: bold;
+        -fx-effect: dropshadow(gaussian, black, 4, 0.8, 2, 2);
+        """);
+        return label;
+    }
+
+    private Button createInvisibleHotspot(double x, double y, double width, double height) {
+        Button button = new Button();
+
+        button.setLayoutX(x);
+        button.setLayoutY(y);
+        button.setPrefSize(width, height);
+
+        button.setStyle("""
+        -fx-background-color: transparent;
+        -fx-border-color: transparent;
+        -fx-cursor: hand;
+        """);
+
+        button.setFocusTraversable(false);
+
+        return button;
     }
 
     public static void main(String[] args) {

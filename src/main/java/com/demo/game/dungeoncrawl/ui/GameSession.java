@@ -10,14 +10,28 @@ public class GameSession {
     private int currentLevel;
     private GameMap map;
     private GameEngine engine;
+    private boolean valid;
 
     public GameSession() {
-        restartGame();
+        valid = restartGame();
     }
 
-    public void restartGame() {
+    public boolean isValid() {
+        return valid;
+    }
+
+    public boolean restartGame() {
         currentLevel = 1;
-        loadCurrentLevel();
+
+        map = MapLoader.loadMap("map1.txt");
+
+        if (map == null) {
+            engine = null;
+            return false;
+        }
+
+        engine = new GameEngine(map);
+        return true;
     }
 
     public void restartLevel() {
@@ -98,4 +112,10 @@ public class GameSession {
         newPlayer.setBaseDefense(oldPlayer.getBaseDefense());
         newPlayer.recalculateStats();
     }
+
+    public boolean hasNextLevel() {
+        String nextMapName = "map" + (currentLevel + 1) + ".txt";
+        return MapLoader.exists(nextMapName);
+    }
+
 }

@@ -42,6 +42,14 @@ public class Main extends Application {
 
     private static final double GAME_OVER_TIME_X = 545;
     private static final double GAME_OVER_TIME_Y = 400;
+    private static final double VICTORY_KILLS_X = 595;
+    private static final double VICTORY_KILLS_Y = 314;
+
+    private static final double VICTORY_LEVEL_X = 595;
+    private static final double VICTORY_LEVEL_Y = 361;
+
+    private static final double VICTORY_TIME_X = 545;
+    private static final double VICTORY_TIME_Y = 410;
 
     private GameMap map;
     private GameEngine engine;
@@ -110,7 +118,7 @@ public class Main extends Application {
 
         loadBtn.setOnAction(_ -> {
             showGameScreen();
-            showLoadDialog();
+            pauseForDialog(this::showLoadDialog);
         });
 
         optionsBtn.setOnAction(_ -> showOptionsScreen());
@@ -177,8 +185,10 @@ public class Main extends Application {
     }
 
     private void showGameScreen() {
+
         stopGameLoop();
 
+        gameOver = false;
         paused = false;
         minimapDirty = true;
         cameraX = 0;
@@ -186,6 +196,10 @@ public class Main extends Application {
 
         session = new GameSession();
         syncFromSession();
+        if (!session.isValid() || map == null || engine == null) {
+            showFatalErrorScreen();
+            return;
+        }
         startGameTimer();
 
         int canvasWidth = VIEW_WIDTH * Tiles.TILE_WIDTH;
@@ -215,6 +229,37 @@ public class Main extends Application {
         };
 
         gameLoop.start();
+    }
+
+    private void showFatalErrorScreen() {
+        stopGameLoop();
+
+        Label title = new Label("ERROR");
+        title.setStyle("""
+        -fx-text-fill: #ff4d4d;
+        -fx-font-size: 48px;
+        -fx-font-weight: bold;
+        """);
+
+        Label text = new Label("Could not start game. Missing or invalid map1.txt.");
+        text.setStyle("-fx-text-fill: white; -fx-font-size: 18px;");
+
+        Button menuBtn = createMenuButton("BACK TO MENU");
+        Button quitBtn = createMenuButton("QUIT");
+
+        menuBtn.setOnAction(_ -> showTitleScreen());
+        quitBtn.setOnAction(_ -> primaryStage.close());
+
+        HBox buttons = new HBox(20, menuBtn, quitBtn);
+        buttons.setAlignment(Pos.CENTER);
+
+        VBox layout = new VBox(25, title, text, buttons);
+        layout.setAlignment(Pos.CENTER);
+        layout.setStyle("-fx-background-color: #111; -fx-padding: 60;");
+
+        Scene scene = new Scene(layout, 900, 700);
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
     private void stopGameLoop() {
@@ -543,7 +588,7 @@ public class Main extends Application {
 
     public void nextLevel() {
         if (!session.nextLevel()) {
-            log("You reached the end of available maps.");
+            handleGameCompleted();
             return;
         }
 
@@ -554,6 +599,35 @@ public class Main extends Application {
         refresh();
 
         log("Entered level " + session.getCurrentLevel());
+    }
+
+    private void handleGameCompleted() {
+        if (gameOver) {
+            return;
+        }
+
+        gameOver = true;
+        paused = true;
+        finalSurvivalNano = getSurvivalNano();
+
+        log("Game completed.");
+        updateHelpText();
+
+        showGameCompletedScreen();
+    }
+
+    private void showGameCompletedScreen() {
+        showEndScreen(
+                "/images/victory_background.png",
+                formatDuration(finalSurvivalNano),
+                VICTORY_KILLS_X,
+                VICTORY_KILLS_Y,
+                VICTORY_LEVEL_X,
+                VICTORY_LEVEL_Y,
+                VICTORY_TIME_X,
+                VICTORY_TIME_Y,
+                false
+        );
     }
 
     private void resizeCanvas() {
@@ -633,7 +707,6 @@ public class Main extends Application {
 
         saveBtn.setOnAction(_ -> showSaveDialog());
         loadBtn.setOnAction(_ -> showLoadDialog());
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -709,62 +782,89 @@ public class Main extends Application {
     }
 
     private void showLoadDialog() {
-        Stage dialog = new Stage();
-        dialog.initOwner(primaryStage);
-        dialog.initStyle(StageStyle.UTILITY);
-        dialog.setTitle("Load Game");
+        boolean wasPaused = pauseForModalStart();
 
-        VBox layout = new VBox(10);
-        layout.setStyle("-fx-background-color: #222; -fx-padding: 15;");
+        try {
+            Stage dialog = new Stage();
+            dialog.initOwner(primaryStage);
+            dialog.initStyle(StageStyle.UTILITY);
+            dialog.setTitle("Load Game");
 
-        for (int i = 1; i <= 5; i++) {
-            int slot = i;
+            VBox layout = new VBox(10);
+            layout.setStyle("-fx-background-color: #222; -fx-padding: 15;");
 
-            SaveData data = SaveManager.exists(slot) ? SaveManager.load(slot) : null;
+            for (int i = 1; i <= 5; i++) {
+                int slot = i;
 
-            String label;
+                SaveData data = SaveManager.exists(slot) ? SaveManager.load(slot) : null;
 
-            if (data != null) {
-                label = "Slot " + slot +
-                        " (Lv " + data.level +
-                        ", HP " + data.player.hp +
-                        ", " + SaveManager.formatTime(data.timestamp) + ")";
-            } else {
-                label = "Empty Slot " + slot;
-            }
+                String label;
 
-            Button loadBtn = new Button(label);
-            styleButton(loadBtn);
-
-            Button deleteBtn = new Button("X");
-            deleteBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
-            deleteBtn.setDisable(data == null);
-
-            loadBtn.setOnAction(_ -> {
-                if (data == null || !session.load(data)) {
-                    log("Empty slot " + slot);
-                    return;
+                if (data != null) {
+                    label = "Slot " + slot +
+                            " (Lv " + data.level +
+                            ", HP " + data.player.hp +
+                            ", " + SaveManager.formatTime(data.timestamp) + ")";
+                } else {
+                    label = "Empty Slot " + slot;
                 }
 
-                syncFromSession();
-                minimapDirty = true;
-                refresh();
-                log("Loaded slot " + slot);
-                dialog.close();
-            });
+                Button loadBtn = new Button(label);
+                styleButton(loadBtn);
 
-            deleteBtn.setOnAction(_ -> {
-                SaveManager.delete(slot);
-                log("Deleted slot " + slot);
-                dialog.close();
-            });
+                Button deleteBtn = new Button("X");
+                deleteBtn.setStyle("-fx-background-color: #662222; -fx-text-fill: white;");
+                deleteBtn.setDisable(data == null);
 
-            layout.getChildren().add(new HBox(10, loadBtn, deleteBtn));
+                loadBtn.setOnAction(_ -> {
+                    if (data == null || !session.load(data)) {
+                        log("Empty slot " + slot);
+                        return;
+                    }
+
+                    syncFromSession();
+                    minimapDirty = true;
+                    refresh();
+                    log("Loaded slot " + slot);
+                    dialog.close();
+                });
+
+                deleteBtn.setOnAction(_ -> {
+                    SaveManager.delete(slot);
+                    log("Deleted slot " + slot);
+                    dialog.close();
+                });
+
+                layout.getChildren().add(new HBox(10, loadBtn, deleteBtn));
+            }
+
+            Scene scene = new Scene(layout, 350, 250);
+            dialog.setScene(scene);
+            dialog.showAndWait();
+
+        } finally {
+            pauseForModalEnd(wasPaused);
+        }
+    }
+
+    private boolean pauseForModalStart() {
+        boolean wasPaused = paused;
+
+        if (!wasPaused) {
+            paused = true;
+            pauseGameTimer();
+            updateHelpText();
         }
 
-        Scene scene = new Scene(layout, 350, 250);
-        dialog.setScene(scene);
-        dialog.showAndWait();
+        return wasPaused;
+    }
+
+    private void pauseForModalEnd(boolean wasPaused) {
+        if (!wasPaused && !gameOver) {
+            paused = false;
+            resumeGameTimer();
+            updateHelpText();
+        }
     }
 
     private void pauseAndConfirmQuit(Stage owner) {
@@ -869,73 +969,17 @@ public class Main extends Application {
     }
 
     private void showGameOverScreen() {
-        stopGameLoop();
-
-        Player player = map != null ? map.getPlayer() : null;
-
-        int kills = player != null ? player.getKills() : 0;
-        int level = session != null ? session.getCurrentLevel() : 1;
-        String survivedTime = formatDuration(finalSurvivalNano);
-
-        Image bgImage = new Image(Objects.requireNonNull(
-                getClass().getResource("/images/game_over_background.png")
-        ).toExternalForm());
-
-        ImageView background = new ImageView(bgImage);
-        background.setFitWidth(900);
-        background.setFitHeight(700);
-        background.setPreserveRatio(false);
-
-        Label killsValue = createGameOverOverlayValue(String.valueOf(kills));
-        Label levelValue = createGameOverOverlayValue(String.valueOf(level));
-        Label timeValue = createGameOverOverlayValue(survivedTime);
-
-        // Pozycje pod grafikę 1536x1024 przeskalowaną do 900x700.
-        // Możliwe, że trzeba będzie lekko dostroić X/Y po odpaleniu.
-        killsValue.setLayoutX(GAME_OVER_KILLS_X);
-        killsValue.setLayoutY(GAME_OVER_KILLS_Y);
-
-        levelValue.setLayoutX(GAME_OVER_LEVEL_X);
-        levelValue.setLayoutY(GAME_OVER_LEVEL_Y);
-
-        timeValue.setLayoutX(GAME_OVER_TIME_X);
-        timeValue.setLayoutY(GAME_OVER_TIME_Y);
-
-        Button loadHotspot = createInvisibleHotspot(70, 585, 245, 70);
-        Button menuHotspot = createInvisibleHotspot(330, 585, 245, 70);
-        Button quitHotspot = createInvisibleHotspot(590, 585, 245, 70);
-
-        loadHotspot.setOnAction(_ -> {
-            gameOver = false;
-            paused = false;
-            showGameScreen();
-            showLoadDialog();
-        });
-
-        menuHotspot.setOnAction(_ -> {
-            gameOver = false;
-            paused = false;
-            showTitleScreen();
-        });
-
-        quitHotspot.setOnAction(_ -> primaryStage.close());
-
-        Pane overlay = new Pane();
-        overlay.setPrefSize(900, 700);
-        overlay.getChildren().addAll(
-                killsValue,
-                levelValue,
-                timeValue,
-                loadHotspot,
-                menuHotspot,
-                quitHotspot
+        showEndScreen(
+                "/images/game_over_background.png",
+                formatDuration(finalSurvivalNano),
+                GAME_OVER_KILLS_X,
+                GAME_OVER_KILLS_Y,
+                GAME_OVER_LEVEL_X,
+                GAME_OVER_LEVEL_Y,
+                GAME_OVER_TIME_X,
+                GAME_OVER_TIME_Y,
+                true
         );
-
-        StackPane root = new StackPane(background, overlay);
-
-        Scene scene = new Scene(root, 900, 700);
-        primaryStage.setScene(scene);
-        primaryStage.show();
     }
 
     private void startGameTimer() {
@@ -1006,6 +1050,124 @@ public class Main extends Application {
         button.setFocusTraversable(false);
 
         return button;
+    }
+
+    private void pauseForDialog(Runnable dialogAction) {
+        boolean wasPaused = paused;
+
+        if (!wasPaused) {
+            paused = true;
+            pauseGameTimer();
+            updateHelpText();
+        }
+
+        try {
+            dialogAction.run();
+        } finally {
+            if (!wasPaused && !gameOver) {
+                paused = false;
+                resumeGameTimer();
+                updateHelpText();
+            }
+        }
+    }
+    public boolean hasNextLevel() {
+        return session != null && session.hasNextLevel();
+    }
+
+    public void completeGame() {
+        handleGameCompleted();
+    }
+
+    private ImageView createBackgroundImage(String resourcePath) {
+        Image bgImage = new Image(Objects.requireNonNull(
+                getClass().getResource(resourcePath)
+        ).toExternalForm());
+
+        ImageView background = new ImageView(bgImage);
+        background.setFitWidth(900);
+        background.setFitHeight(700);
+        background.setPreserveRatio(false);
+
+        return background;
+    }
+
+    private void showEndScreen(
+            String backgroundPath,
+            String timeText,
+            double killsX,
+            double killsY,
+            double levelX,
+            double levelY,
+            double timeX,
+            double timeY,
+            boolean allowLoadGame
+    ) {
+        stopGameLoop();
+
+        Player player = map != null ? map.getPlayer() : null;
+
+        int kills = player != null ? player.getKills() : 0;
+        int level = session != null ? session.getCurrentLevel() : 1;
+
+        ImageView background = createBackgroundImage(backgroundPath);
+
+        Label killsValue = createGameOverOverlayValue(String.valueOf(kills));
+        Label levelValue = createGameOverOverlayValue(String.valueOf(level));
+        Label timeValue = createGameOverOverlayValue(timeText);
+
+        killsValue.setLayoutX(killsX);
+        killsValue.setLayoutY(killsY);
+
+        levelValue.setLayoutX(levelX);
+        levelValue.setLayoutY(levelY);
+
+        timeValue.setLayoutX(timeX);
+        timeValue.setLayoutY(timeY);
+
+        Button firstHotspot = createInvisibleHotspot(70, 585, 245, 70);
+        Button menuHotspot = createInvisibleHotspot(330, 585, 245, 70);
+        Button quitHotspot = createInvisibleHotspot(590, 585, 245, 70);
+
+        if (allowLoadGame) {
+            firstHotspot.setOnAction(_ -> {
+                gameOver = false;
+                paused = false;
+                showGameScreen();
+                pauseForDialog(this::showLoadDialog);
+            });
+        } else {
+            firstHotspot.setOnAction(_ -> {
+                gameOver = false;
+                paused = false;
+                showGameScreen();
+            });
+        }
+
+        menuHotspot.setOnAction(_ -> {
+            gameOver = false;
+            paused = false;
+            showTitleScreen();
+        });
+
+        quitHotspot.setOnAction(_ -> primaryStage.close());
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(900, 700);
+        overlay.getChildren().addAll(
+                killsValue,
+                levelValue,
+                timeValue,
+                firstHotspot,
+                menuHotspot,
+                quitHotspot
+        );
+
+        StackPane root = new StackPane(background, overlay);
+
+        Scene scene = new Scene(root, 900, 700);
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
     public static void main(String[] args) {

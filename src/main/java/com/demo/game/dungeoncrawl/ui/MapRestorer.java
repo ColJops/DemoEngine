@@ -36,10 +36,14 @@ final class MapRestorer {
 
         EnemyRestorer.clearEnemies(map);
         clearItems(map);
+
+        // Najpierw stan drzwi, bo enemy/player mogą stać na kaflu,
+        // który w bazowej mapie jest DOOR, ale w save jest już otwarty.
+        restoreDoors(data, map);
+
         PlayerRestorer.restore(data, map);
         EnemyRestorer.restore(data, map);
         restoreItems(restoredItems);
-        restoreDoors(data, map);
 
         return map;
     }

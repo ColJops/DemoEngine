@@ -1,63 +1,65 @@
 package com.demo.game.dungeoncrawl.combat;
 
+import com.demo.game.dungeoncrawl.engine.CombatResult;
 import com.demo.game.dungeoncrawl.model.Actor;
 import com.demo.game.dungeoncrawl.model.Enemy;
 import com.demo.game.dungeoncrawl.model.Player;
+import com.demo.game.dungeoncrawl.model.map.Cell;
 import com.demo.game.dungeoncrawl.model.map.GameMap;
 import com.demo.game.dungeoncrawl.ui.Main;
 
 public class CombatSystem {
 
-    public static void attack(Actor attacker, Actor target, GameMap map) {
+    private CombatSystem() {
+    }
 
-        if (attacker == null || target == null) {
-            return;
-        }
-
-        if (!attacker.isAlive() || !target.isAlive()) {
-            return;
+    public static CombatResult attack(Actor attacker, Actor target, GameMap map) {
+        if (attacker == null || target == null || map == null) {
+            return CombatResult.HIT;
         }
 
         int damage = Math.max(1, attacker.getAttack() - target.getDefense());
-
         target.takeDamage(damage);
 
-        Main.log(attacker.getClass().getSimpleName()
-                + " attacks "
-                + target.getClass().getSimpleName()
-                + " for "
-                + damage
-                + " damage.");
+        Main.log(actorName(attacker) + " hits " + actorName(target) + " for " + damage + " damage.");
 
-        if (!target.isAlive()) {
-            handleDeath(attacker, target, map);
+        if (target.isAlive()) {
+            return CombatResult.HIT;
         }
+
+        if (target instanceof Player) {
+            Main.log("Player died.");
+            return CombatResult.PLAYER_KILLED;
+        }
+
+        if (target instanceof Enemy enemy) {
+            handleEnemyDeath(attacker, enemy, map);
+        }
+
+        return CombatResult.TARGET_KILLED;
     }
 
-    private static void handleDeath(Actor attacker, Actor target, GameMap map) {
+    private static void handleEnemyDeath(Actor attacker, Enemy enemy, GameMap map) {
+        Main.log(actorName(enemy) + " died.");
 
-        // =========================
-        // PLAYER DEATH
-        // =========================
-        if (target instanceof Player) {
-            Main.log("You have been slain...");
-            Main.gameOver();
-            return;
+        if (attacker instanceof Player player) {
+            player.addKill();
         }
 
-        // =========================
-        // ENEMY DEATH
-        // =========================
-        if (target instanceof Enemy) {
-            target.getCell().setActor(null);
-            map.removeActor(target);
+        Cell cell = enemy.getCell();
 
-            if (attacker instanceof Player player) {
-                player.addKill();
-                Main.log("You killed a " + target.getClass().getSimpleName() + "!");
-            } else {
-                Main.log(target.getClass().getSimpleName() + " died.");
-            }
+        if (cell != null) {
+            cell.setActor(null);
         }
+
+        map.removeActor(enemy);
+    }
+
+    private static String actorName(Actor actor) {
+        if (actor instanceof Player) {
+            return "Player";
+        }
+
+        return actor.getClass().getSimpleName();
     }
 }

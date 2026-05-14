@@ -169,4 +169,7 @@ public class MapLoader {
         return mapDefinitions;
     }
 
+    public static boolean exists(String mapName) {
+        return MapLoader.class.getResourceAsStream("/" + mapName) != null;
+    }
 }
